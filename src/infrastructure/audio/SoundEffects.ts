@@ -1,3 +1,7 @@
+/**
+ * スロット開始・勝利演出のサウンド再生を管理するクラス。
+ * オーディオ要素のプリロードと再生可否チェックを行い、安全に効果音を鳴らします。
+ */
 export class SoundEffects {
   private winAudio: HTMLAudioElement | null = null;
   private spinAudio: HTMLAudioElement | null = null;

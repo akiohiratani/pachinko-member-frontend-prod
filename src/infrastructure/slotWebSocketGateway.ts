@@ -11,6 +11,10 @@ type RawMessage = {
   [key: string]: unknown;
 };
 
+/**
+ * スロット演出用の WebSocket 接続を抽象化するゲートウェイクラス。
+ * roundStart メッセージだけを抽出してコールバックへ引き渡します。
+ */
 export class SlotWebSocketGateway {
   private socket: WebSocket | null = null;
   private hasConnected = false;
