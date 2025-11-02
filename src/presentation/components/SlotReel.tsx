@@ -29,13 +29,26 @@ export function SlotReel({
     [listLength, symbols, symbolCount],
   );
 
+  const [initialIndex] = React.useState(() =>
+    symbolCount > 0 ? Math.floor(Math.random() * symbolCount) : 0,
+  );
+  const [hasStarted, setHasStarted] = React.useState(false);
+
+  React.useEffect(() => {
+    if (spinning) {
+      setHasStarted(true);
+    }
+  }, [spinning]);
+
   const finalOffset = Math.round(-(cycles * symbolCount * itemHeight + targetIndex * itemHeight));
+  const initialOffset = -initialIndex * itemHeight;
+  const restingOffset = hasStarted ? 0 : initialOffset;
 
   const trackStyle: React.CSSProperties = {
     transitionProperty: "transform",
     transitionDuration: spinning ? `${spinMs}ms` : "0ms",
     transitionTimingFunction: spinning ? easing : "linear",
-    transform: `translate3d(0, ${spinning ? finalOffset : 0}px, 0)`,
+    transform: `translate3d(0, ${spinning ? finalOffset : restingOffset}px, 0)`,
     willChange: spinning ? "transform" : undefined,
   };
 
