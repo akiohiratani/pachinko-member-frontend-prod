@@ -31,7 +31,8 @@ export default function App() {
   const websocketRef = useRef<SlotWebSocketGateway | null>(null);
   const startTimerRef = useRef<number | null>(null);
   const finishTimerRef = useRef<number | null>(null);
-  // 点滅エフェクト用のタイマーを管理し、ラウンドを跨いだ点滅を防止する。
+  // リーチ開始と終了のタイマーを個別に保持し、点滅の発火タイミングを制御する。
+  const reachStartTimerRef = useRef<number | null>(null);
   const highlightTimerRef = useRef<number | null>(null);
 
   const websocketUrl = useMemo(
@@ -56,6 +57,10 @@ export default function App() {
     return () => {
       if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+      if (reachStartTimerRef.current) {
+        window.clearTimeout(reachStartTimerRef.current);
+        reachStartTimerRef.current = null;
+      }
       if (highlightTimerRef.current) {
         window.clearTimeout(highlightTimerRef.current);
         highlightTimerRef.current = null;
@@ -73,18 +78,22 @@ export default function App() {
 
       if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+      if (reachStartTimerRef.current) {
+        window.clearTimeout(reachStartTimerRef.current);
+        reachStartTimerRef.current = null;
+      }
       if (highlightTimerRef.current) {
         window.clearTimeout(highlightTimerRef.current);
         highlightTimerRef.current = null;
       }
 
-      const nextHighlightMode: "none" | "reach" | "win" = plan.isWin
-        ? "win"
-        : slotManager.reelCount >= 3 &&
-            plan.targetIndexes.length >= 3 &&
-            plan.targetIndexes[0] === plan.targetIndexes[2]
-          ? "reach"
-          : "none";
+      const shouldBlinkReach =
+        !plan.isWin &&
+        slotManager.reelCount >= 3 &&
+        plan.targetIndexes.length >= 3 &&
+        plan.targetIndexes[0] === plan.targetIndexes[2];
+      // 右リールが停止するまでの時間を算出し、停止後に点滅を開始する。
+      const rightReelStopMs = plan.baseSpinDurationMs + slotManager.reelDelayMs;
 
       startTimerRef.current = window.setTimeout(() => {
         setSpinning(false);
@@ -93,7 +102,19 @@ export default function App() {
         requestAnimationFrame(() =>
           requestAnimationFrame(() => {
             setSpinning(true);
-            setHighlightMode(nextHighlightMode);
+            if (shouldBlinkReach) {
+              reachStartTimerRef.current = window.setTimeout(() => {
+                setHighlightMode("reach");
+                reachStartTimerRef.current = null;
+                const remainingMs = plan.totalSpinMs - rightReelStopMs;
+                if (remainingMs > 0) {
+                  highlightTimerRef.current = window.setTimeout(() => {
+                    setHighlightMode("none");
+                    highlightTimerRef.current = null;
+                  }, remainingMs);
+                }
+              }, Math.max(0, rightReelStopMs));
+            }
           }),
         );
 
@@ -120,16 +141,16 @@ export default function App() {
           if (!plan.isWin) return;
           const effects = soundEffectsRef.current;
           if (!effects) return;
-          void effects.playWinAlert();
+          (async () => {
+            try {
+              await effects.playWinAlert();
+              // 大当たり音の再生が完了したタイミングで虹色の演出を開始する。
+              setHighlightMode("win");
+            } catch {
+              /* 音声再生に失敗した場合は演出を開始しない。 */
+            }
+          })();
         }, totalMs);
-
-        if (nextHighlightMode === "reach") {
-          // リーチ演出は結果確定後に消灯させ、次のラウンドへ影響を残さない。
-          highlightTimerRef.current = window.setTimeout(() => {
-            setHighlightMode("none");
-            highlightTimerRef.current = null;
-          }, totalMs);
-        }
       }, plan.delayMs);
     },
     [slotManager],
