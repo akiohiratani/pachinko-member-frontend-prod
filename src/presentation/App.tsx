@@ -5,6 +5,7 @@ import { SoundEffects } from "../infrastructure/audio/SoundEffects";
 import { SlotWebSocketGateway } from "../infrastructure/slotWebSocketGateway";
 import { SlotMachineManager } from "../usecases/slotMachineManager";
 import type { RoundStartPayload } from "../usecases/slotMachineManager";
+import { SlotRoundController } from "../usecases/slotRoundController";
 import { SlotMachine } from "./components/SlotMachine";
 import { WelcomeModal } from "./components/WelcomeModal";
 import { useSlotLayout } from "./hooks/useSlotLayout";
@@ -53,11 +54,7 @@ export default function App() {
 
   const soundEffectsRef = useRef<SoundEffects | null>(null);
   const websocketRef = useRef<SlotWebSocketGateway | null>(null);
-  const startTimerRef = useRef<number | null>(null);
-  const finishTimerRef = useRef<number | null>(null);
-  // リーチ開始と終了のタイマーを個別に保持し、点滅の発火タイミングを制御する。
-  const reachStartTimerRef = useRef<number | null>(null);
-  const highlightTimerRef = useRef<number | null>(null);
+  const roundControllerRef = useRef<SlotRoundController | null>(null);
 
   const websocketUrl = useMemo(
     () => import.meta.env.VITE_WEBSOCKET_URL ?? DEFAULT_WEBSOCKET_URL,
@@ -78,114 +75,46 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    roundControllerRef.current = new SlotRoundController(slotManager);
     return () => {
-      if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
-      if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
-      if (reachStartTimerRef.current) {
-        window.clearTimeout(reachStartTimerRef.current);
-        reachStartTimerRef.current = null;
-      }
-      if (highlightTimerRef.current) {
-        window.clearTimeout(highlightTimerRef.current);
-        highlightTimerRef.current = null;
-      }
+      roundControllerRef.current?.dispose();
+      roundControllerRef.current = null;
       websocketRef.current?.disconnect();
     };
-  }, []);
+  }, [slotManager]);
 
   const handleRoundStart = useCallback(
     (payload: RoundStartPayload) => {
-      const plan = slotManager.planRound(payload);
-      setTargetIndexes(plan.targetIndexes);
-      setSpinBaseMs(plan.baseSpinDurationMs);
-      setReachExtraDelayMs(plan.reachExtraDelayMs);
-
-      if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
-      if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
-      if (reachStartTimerRef.current) {
-        window.clearTimeout(reachStartTimerRef.current);
-        reachStartTimerRef.current = null;
+      if (!roundControllerRef.current) {
+        roundControllerRef.current = new SlotRoundController(slotManager);
       }
-      if (highlightTimerRef.current) {
-        window.clearTimeout(highlightTimerRef.current);
-        highlightTimerRef.current = null;
-      }
-
-      const shouldBlinkReach =
-        // 当たり・外れを問わず左右の図柄が一致したらリーチ演出を発火させ、結果を推測されないようにする。
-        slotManager.reelCount >= 3 &&
-        plan.targetIndexes.length >= 3 &&
-        plan.targetIndexes[0] === plan.targetIndexes[2];
-      // 右リールが停止するまでの時間を算出し、停止後に点滅を開始する。
-      const rightReelStopMs = plan.baseSpinDurationMs + slotManager.reelDelayMs;
-
-      startTimerRef.current = window.setTimeout(() => {
-        setSpinning(false);
-        // ラウンドの開始直前にハイライトをリセットし、演出を新しい結果へ同期させる。
-        setHighlightMode("none");
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => {
+      roundControllerRef.current.handleRoundStart(
+        payload,
+        {
+          onPrepare: (roundPlan) => {
+            // ラウンド準備と開始を同期させ、WebSocket メッセージ受信直後に演出へ移行する。
+            setSpinBaseMs(roundPlan.baseSpinDurationMs);
+            setReachExtraDelayMs(roundPlan.reachExtraDelayMs);
+            setSpinning(false);
+            // ラウンドの開始直前にハイライトをリセットし、演出を新しい結果へ同期させる。
+            setHighlightMode("none");
+          },
+          onSpin: (indexes) => {
+            setTargetIndexes(indexes);
             setSpinning(true);
-            if (shouldBlinkReach) {
-              reachStartTimerRef.current = window.setTimeout(() => {
-                setHighlightMode("reach");
-                reachStartTimerRef.current = null;
-                const remainingMs = plan.totalSpinMs - rightReelStopMs;
-                if (remainingMs > 0) {
-                  highlightTimerRef.current = window.setTimeout(() => {
-                    setHighlightMode("none");
-                    highlightTimerRef.current = null;
-                  }, remainingMs);
-                }
-              }, Math.max(0, rightReelStopMs));
-            }
-          }),
-        );
-
-        const effects = soundEffectsRef.current;
-        if (effects) {
-          (async () => {
-            try {
-              await effects.playStart(plan.startSound);
-            } catch {
-              if (plan.startSound === "win") {
-                try {
-                  await effects.playStart("spin");
-                } catch {
-                  /* noop */
-                }
-              }
-            }
-          })();
-        }
-
-        const totalMs = plan.totalSpinMs;
-        finishTimerRef.current = window.setTimeout(() => {
-          // 全リール停止後に勝利判定を確認し、0.3 秒遅らせて確定音を鳴らす。
-          if (!plan.isWin) return;
-          const effects = soundEffectsRef.current;
-          if (!effects) return;
-          (async () => {
-            try {
-              await effects.playWinAlert();
-              // 大当たり音の再生が完了したタイミングで虹色の演出を開始する。
-              if (reachStartTimerRef.current) {
-                // リーチ演出のタイマーが残っている場合は停止し、勝利演出に割り込まないようにする。
-                window.clearTimeout(reachStartTimerRef.current);
-                reachStartTimerRef.current = null;
-              }
-              if (highlightTimerRef.current) {
-                // リーチ用のハイライト解除タイマーが勝利演出を打ち消さないよう事前に無効化する。
-                window.clearTimeout(highlightTimerRef.current);
-                highlightTimerRef.current = null;
-              }
-              setHighlightMode("win");
-            } catch {
-              /* 音声再生に失敗した場合は演出を開始しない。 */
-            }
-          })();
-        }, totalMs);
-      }, plan.delayMs);
+          },
+          onReachStart: () => {
+            setHighlightMode("reach");
+          },
+          onReachEnd: () => {
+            setHighlightMode("none");
+          },
+          onWin: () => {
+            setHighlightMode("win");
+          },
+        },
+        soundEffectsRef.current,
+      );
     },
     [slotManager],
   );
