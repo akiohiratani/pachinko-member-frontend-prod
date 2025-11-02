@@ -112,7 +112,7 @@ export default function App() {
       }
 
       const shouldBlinkReach =
-        !plan.isWin &&
+        // 当たり・外れを問わず左右の図柄が一致したらリーチ演出を発火させ、結果を推測されないようにする。
         slotManager.reelCount >= 3 &&
         plan.targetIndexes.length >= 3 &&
         plan.targetIndexes[0] === plan.targetIndexes[2];
