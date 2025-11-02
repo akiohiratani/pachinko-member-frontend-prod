@@ -112,7 +112,7 @@ export default function App() {
       }
 
       const shouldBlinkReach =
-        !plan.isWin &&
+        // 当たり・外れを問わず左右の図柄が一致したらリーチ演出を発火させ、結果を推測されないようにする。
         slotManager.reelCount >= 3 &&
         plan.targetIndexes.length >= 3 &&
         plan.targetIndexes[0] === plan.targetIndexes[2];
@@ -169,6 +169,16 @@ export default function App() {
             try {
               await effects.playWinAlert();
               // 大当たり音の再生が完了したタイミングで虹色の演出を開始する。
+              if (reachStartTimerRef.current) {
+                // リーチ演出のタイマーが残っている場合は停止し、勝利演出に割り込まないようにする。
+                window.clearTimeout(reachStartTimerRef.current);
+                reachStartTimerRef.current = null;
+              }
+              if (highlightTimerRef.current) {
+                // リーチ用のハイライト解除タイマーが勝利演出を打ち消さないよう事前に無効化する。
+                window.clearTimeout(highlightTimerRef.current);
+                highlightTimerRef.current = null;
+              }
               setHighlightMode("win");
             } catch {
               /* 音声再生に失敗した場合は演出を開始しない。 */
