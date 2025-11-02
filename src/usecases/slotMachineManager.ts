@@ -15,6 +15,11 @@ export type RoundPlan = {
   totalSpinMs: number;
   startSound: "win" | "spin";
   isWin: boolean;
+  /**
+   * リーチが発生した際に最後のリールへ追加する演出用のディレイ時間。
+   * リーチではない場合は 0 として扱います。
+   */
+  reachExtraDelayMs: number;
 };
 
 /**
@@ -31,6 +36,18 @@ export class SlotMachineManager {
   planRound(payload: RoundStartPayload, now = Date.now()): RoundPlan {
     const isWin = this.random.float() < SLOT_MACHINE_CONFIG.winProbability;
     const targetIndexes = this.decideTargets(isWin);
+    // 左右のリールが揃っていて中央のみが異なる場合をリーチとみなす。
+    const isReach =
+      !isWin &&
+      SLOT_MACHINE_CONFIG.reelCount >= 3 &&
+      targetIndexes[0] === targetIndexes[2];
+    // リーチ時は 5~10 秒の余韻を最後のリールへ追加し、演出を長めにする。
+    const reachExtraDelayMs = isReach ? randomInt(this.random, 5000, 10000) : 0;
+
+    // リーチでない通常時の総演出時間を決めたうえで、最後のリール分を除いた基本時間を算出する。
+    // リーチの追加演出分は最後のリールに加算されるため、totalSpinMs にのみ反映する。
+    const sequentialDelayTotal =
+      SLOT_MACHINE_CONFIG.reelDelayMs * (SLOT_MACHINE_CONFIG.reelCount - 1);
     const desiredTotalMs = randomInt(
       this.random,
       SLOT_MACHINE_CONFIG.minTotalSpinMs,
@@ -38,7 +55,7 @@ export class SlotMachineManager {
     );
     const baseSpinDurationMs = Math.max(
       0,
-      desiredTotalMs - SLOT_MACHINE_CONFIG.reelDelayMs * (SLOT_MACHINE_CONFIG.reelCount - 1),
+      desiredTotalMs - sequentialDelayTotal,
     );
 
     const delayMs = this.calculateDelay(payload.startAt, now);
@@ -49,10 +66,10 @@ export class SlotMachineManager {
       targetIndexes,
       baseSpinDurationMs,
       delayMs,
-      totalSpinMs:
-        baseSpinDurationMs + SLOT_MACHINE_CONFIG.reelDelayMs * (SLOT_MACHINE_CONFIG.reelCount - 1),
+      totalSpinMs: baseSpinDurationMs + sequentialDelayTotal + reachExtraDelayMs,
       startSound,
       isWin,
+      reachExtraDelayMs,
     };
   }
 

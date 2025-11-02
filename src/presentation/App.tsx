@@ -21,6 +21,8 @@ export default function App() {
     Array(slotManager.reelCount).fill(0),
   );
   const [spinBaseMs, setSpinBaseMs] = useState<number>(SLOT_MACHINE_CONFIG.baseSpinMs);
+  // リーチ時の追加演出時間を個別に管理し、SlotMachine へ伝播させる。
+  const [reachExtraDelayMs, setReachExtraDelayMs] = useState<number>(0);
   const [showWelcome, setShowWelcome] = useState(true);
 
   const soundEffectsRef = useRef<SoundEffects | null>(null);
@@ -59,6 +61,7 @@ export default function App() {
       const plan = slotManager.planRound(payload);
       setTargetIndexes(plan.targetIndexes);
       setSpinBaseMs(plan.baseSpinDurationMs);
+      setReachExtraDelayMs(plan.reachExtraDelayMs);
 
       if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
@@ -132,6 +135,7 @@ export default function App() {
         baseSpinMs={spinBaseMs}
         reelDelayMs={slotManager.reelDelayMs}
         easing={slotManager.easing}
+        reachExtraDelayMs={reachExtraDelayMs}
         reelWidth={layout.reelWidth}
         itemHeight={layout.itemHeight}
         framePadding={layout.framePadding}
