@@ -8,6 +8,7 @@ export class SoundEffects {
 
   constructor(spinSrc: string, winAlertSrc: string) {
     if (typeof Audio !== "undefined") {
+      // 事前に Audio インスタンスを生成し、連続再生時でも遅延が生じないようにプリロードしておく。
       this.spinAudio = new Audio(spinSrc);
       this.spinAudio.preload = "auto";
       this.winAlertAudio = new Audio(winAlertSrc);
@@ -20,6 +21,7 @@ export class SoundEffects {
       await Promise.all(
         [this.spinAudio, this.winAlertAudio].map(async (audio) => {
           if (!audio) return;
+          // ブラウザの自動再生制限を解除するため、無音再生→停止でユーザー操作をトリガー扱いにする。
           await audio.play();
           audio.pause();
           audio.currentTime = 0;
@@ -34,6 +36,7 @@ export class SoundEffects {
   async playSpinStart(): Promise<void> {
     if (!this.spinAudio) return;
     try {
+      // 前回の再生位置をリセットし、常に先頭から開始音を鳴らす。
       this.spinAudio.currentTime = 0;
       await this.spinAudio.play();
     } catch {
@@ -44,6 +47,7 @@ export class SoundEffects {
   async playWinAlert(): Promise<void> {
     if (!this.winAlertAudio) return;
     try {
+      // 勝利音もリセットしてから再生し、複数ラウンドで確実に鳴らせるようにする。
       this.winAlertAudio.currentTime = 0;
       await this.winAlertAudio.play();
     } catch {
