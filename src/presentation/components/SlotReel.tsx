@@ -32,9 +32,11 @@ export function SlotReel({
   const finalOffset = Math.round(-(cycles * symbolCount * itemHeight + targetIndex * itemHeight));
 
   const trackStyle: React.CSSProperties = {
-    transition: `transform ${spinMs}ms ${easing}`,
-    transform: spinning ? `translate3d(0, ${finalOffset}px, 0)` : `translate3d(0, 0, 0)`,
-    willChange: "transform",
+    transitionProperty: "transform",
+    transitionDuration: spinning ? `${spinMs}ms` : "0ms",
+    transitionTimingFunction: spinning ? easing : "linear",
+    transform: `translate3d(0, ${spinning ? finalOffset : 0}px, 0)`,
+    willChange: spinning ? "transform" : undefined,
   };
 
   return (
