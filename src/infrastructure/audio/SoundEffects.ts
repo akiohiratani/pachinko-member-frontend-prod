@@ -3,23 +3,25 @@
  * オーディオ要素のプリロードと再生可否チェックを行い、安全に効果音を鳴らします。
  */
 export class SoundEffects {
-  private winAudio: HTMLAudioElement | null = null;
   private spinAudio: HTMLAudioElement | null = null;
+  private winAlertAudio: HTMLAudioElement | null = null;
 
-  constructor(winSrc: string, spinSrc: string) {
+  constructor(spinSrc: string, winAlertSrc: string) {
     if (typeof Audio !== "undefined") {
-      this.winAudio = new Audio(winSrc);
-      this.winAudio.preload = "auto";
+      // 事前に Audio インスタンスを生成し、連続再生時でも遅延が生じないようにプリロードしておく。
       this.spinAudio = new Audio(spinSrc);
       this.spinAudio.preload = "auto";
+      this.winAlertAudio = new Audio(winAlertSrc);
+      this.winAlertAudio.preload = "auto";
     }
   }
 
   async enable(): Promise<boolean> {
     try {
       await Promise.all(
-        [this.winAudio, this.spinAudio].map(async (audio) => {
+        [this.spinAudio, this.winAlertAudio].map(async (audio) => {
           if (!audio) return;
+          // ブラウザの自動再生制限を解除するため、無音再生→停止でユーザー操作をトリガー扱いにする。
           await audio.play();
           audio.pause();
           audio.currentTime = 0;
@@ -31,31 +33,30 @@ export class SoundEffects {
     }
   }
 
-  async playStart(sound: "win" | "spin"): Promise<void> {
-    const target = sound === "win" ? this.winAudio : this.spinAudio;
-    if (!target) return;
+  async playSpinStart(): Promise<void> {
+    if (!this.spinAudio) return;
     try {
-      target.currentTime = 0;
-      await target.play();
+      // 前回の再生位置をリセットし、常に先頭から開始音を鳴らす。
+      this.spinAudio.currentTime = 0;
+      await this.spinAudio.play();
     } catch {
-      if (sound === "win") {
-        await this.playFallbackSpin();
-      }
+      // Ignore spin sound failure
+    }
+  }
+
+  async playWinAlert(): Promise<void> {
+    if (!this.winAlertAudio) return;
+    try {
+      // 勝利音もリセットしてから再生し、複数ラウンドで確実に鳴らせるようにする。
+      this.winAlertAudio.currentTime = 0;
+      await this.winAlertAudio.play();
+    } catch {
+      // Ignore win alert failure
     }
   }
 
   dispose() {
-    this.winAudio = null;
     this.spinAudio = null;
-  }
-
-  private async playFallbackSpin() {
-    if (!this.spinAudio) return;
-    try {
-      this.spinAudio.currentTime = 0;
-      await this.spinAudio.play();
-    } catch {
-      // Ignore fallback failure
-    }
+    this.winAlertAudio = null;
   }
 }

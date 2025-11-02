@@ -6,7 +6,6 @@ export const SLOT_MACHINE_CONFIG = {
   winProbability: 0.2,
   minTotalSpinMs: 5000,
   maxTotalSpinMs: 10000,
-  winStartSoundProbability: 0.6,
 } as const;
 
 export type SlotMachineConfig = typeof SLOT_MACHINE_CONFIG;
