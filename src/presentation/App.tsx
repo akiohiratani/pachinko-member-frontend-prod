@@ -169,6 +169,16 @@ export default function App() {
             try {
               await effects.playWinAlert();
               // 大当たり音の再生が完了したタイミングで虹色の演出を開始する。
+              if (reachStartTimerRef.current) {
+                // リーチ演出のタイマーが残っている場合は停止し、勝利演出に割り込まないようにする。
+                window.clearTimeout(reachStartTimerRef.current);
+                reachStartTimerRef.current = null;
+              }
+              if (highlightTimerRef.current) {
+                // リーチ用のハイライト解除タイマーが勝利演出を打ち消さないよう事前に無効化する。
+                window.clearTimeout(highlightTimerRef.current);
+                highlightTimerRef.current = null;
+              }
               setHighlightMode("win");
             } catch {
               /* 音声再生に失敗した場合は演出を開始しない。 */
