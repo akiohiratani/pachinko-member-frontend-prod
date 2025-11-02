@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 import type { SymbolDef } from "../../domain/symbols";
 import { SlotReel } from "./SlotReel";
+import "./SlotMachine.css";
 
 type SlotMachineProps = {
   spinning: boolean;
@@ -15,6 +18,7 @@ type SlotMachineProps = {
   gap: number;
   containerMax: number;
   symbols: readonly SymbolDef[];
+  highlightMode: "none" | "reach" | "win";
 };
 
 const cyclesPattern = [8, 9, 10];
@@ -35,21 +39,58 @@ export function SlotMachine({
   gap,
   containerMax,
   symbols,
+  highlightMode,
 }: SlotMachineProps) {
   const outerWidth = reelCount * reelWidth + (reelCount - 1) * gap + framePadding * 2;
+  // リーチ演出中は色をランダムに切り替えて枠の点滅色を決定する。
+  const [reachBlinkColor, setReachBlinkColor] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!spinning || highlightMode !== "reach") {
+      setReachBlinkColor(null);
+      return;
+    }
+    const colors = [
+      "rgba(59,130,246,0.55)",
+      "rgba(239,68,68,0.55)",
+      "rgba(34,197,94,0.55)",
+    ];
+    const pickColor = () => {
+      const index = Math.floor(Math.random() * colors.length);
+      setReachBlinkColor(colors[index]);
+    };
+    pickColor();
+    const timer = window.setInterval(pickColor, 420);
+    return () => window.clearInterval(timer);
+  }, [spinning, highlightMode]);
+
+  const frameClassNames = ["slot-machine-frame"];
+  if (spinning && highlightMode === "reach") {
+    // リーチ中のみ擬似要素に点滅アニメーションを適用する。
+    frameClassNames.push("slot-machine-frame--reach");
+  }
+  if (highlightMode === "win") {
+    // 揃った際はリール停止後も虹色のグラデーションを継続させる。
+    frameClassNames.push("slot-machine-frame--win");
+  }
+
+  const frameStyle: CSSProperties & { "--blink-color"?: string } = {
+    width: Math.min(outerWidth, containerMax),
+    padding: framePadding,
+    border: "1px solid #e5e7eb",
+    borderRadius: 20,
+    background: "#ffffff",
+    boxShadow: "0 12px 28px rgba(15,23,42,0.10)",
+    transform: "translateZ(0)",
+    position: "relative",
+  };
+
+  if (reachBlinkColor) {
+    frameStyle["--blink-color"] = reachBlinkColor;
+  }
 
   return (
-    <div
-      style={{
-        width: Math.min(outerWidth, containerMax),
-        padding: framePadding,
-        border: "1px solid #e5e7eb",
-        borderRadius: 20,
-        background: "#ffffff",
-        boxShadow: "0 12px 28px rgba(15,23,42,0.10)",
-        transform: "translateZ(0)",
-      }}
-    >
+    <div className={frameClassNames.join(" ")} style={frameStyle}>
       <div
         style={{
           display: "grid",

@@ -23,12 +23,16 @@ export default function App() {
   const [spinBaseMs, setSpinBaseMs] = useState<number>(SLOT_MACHINE_CONFIG.baseSpinMs);
   // リーチ時の追加演出時間を個別に管理し、SlotMachine へ伝播させる。
   const [reachExtraDelayMs, setReachExtraDelayMs] = useState<number>(0);
+  // UI の演出種別を保持し、SlotMachine 側で点滅エフェクトを切り替える。
+  const [highlightMode, setHighlightMode] = useState<"none" | "reach" | "win">("none");
   const [showWelcome, setShowWelcome] = useState(true);
 
   const soundEffectsRef = useRef<SoundEffects | null>(null);
   const websocketRef = useRef<SlotWebSocketGateway | null>(null);
   const startTimerRef = useRef<number | null>(null);
   const finishTimerRef = useRef<number | null>(null);
+  // 点滅エフェクト用のタイマーを管理し、ラウンドを跨いだ点滅を防止する。
+  const highlightTimerRef = useRef<number | null>(null);
 
   const websocketUrl = useMemo(
     () => import.meta.env.VITE_WEBSOCKET_URL ?? DEFAULT_WEBSOCKET_URL,
@@ -52,6 +56,10 @@ export default function App() {
     return () => {
       if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+      if (highlightTimerRef.current) {
+        window.clearTimeout(highlightTimerRef.current);
+        highlightTimerRef.current = null;
+      }
       websocketRef.current?.disconnect();
     };
   }, []);
@@ -65,11 +73,28 @@ export default function App() {
 
       if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+      if (highlightTimerRef.current) {
+        window.clearTimeout(highlightTimerRef.current);
+        highlightTimerRef.current = null;
+      }
+
+      const nextHighlightMode: "none" | "reach" | "win" = plan.isWin
+        ? "win"
+        : slotManager.reelCount >= 3 &&
+            plan.targetIndexes.length >= 3 &&
+            plan.targetIndexes[0] === plan.targetIndexes[2]
+          ? "reach"
+          : "none";
 
       startTimerRef.current = window.setTimeout(() => {
         setSpinning(false);
+        // ラウンドの開始直前にハイライトをリセットし、演出を新しい結果へ同期させる。
+        setHighlightMode("none");
         requestAnimationFrame(() =>
-          requestAnimationFrame(() => setSpinning(true)),
+          requestAnimationFrame(() => {
+            setSpinning(true);
+            setHighlightMode(nextHighlightMode);
+          }),
         );
 
         const effects = soundEffectsRef.current;
@@ -97,6 +122,14 @@ export default function App() {
           if (!effects) return;
           void effects.playWinAlert();
         }, totalMs);
+
+        if (nextHighlightMode === "reach") {
+          // リーチ演出は結果確定後に消灯させ、次のラウンドへ影響を残さない。
+          highlightTimerRef.current = window.setTimeout(() => {
+            setHighlightMode("none");
+            highlightTimerRef.current = null;
+          }, totalMs);
+        }
       }, plan.delayMs);
     },
     [slotManager],
@@ -148,6 +181,7 @@ export default function App() {
         gap={layout.gap}
         containerMax={layout.containerMax}
         symbols={SYMBOLS}
+        highlightMode={highlightMode}
       />
 
       {showWelcome && <WelcomeModal onTap={handleWelcomeTap} />}

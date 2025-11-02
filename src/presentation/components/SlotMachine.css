@@ -1,0 +1,58 @@
+.slot-machine-frame {
+  position: relative;
+  overflow: visible;
+}
+
+.slot-machine-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateZ(0);
+}
+
+.slot-machine-frame--reach::before {
+  background: var(--blink-color, rgba(59, 130, 246, 0.55));
+  animation: slot-machine-reach-blink 0.5s steps(2, end) infinite;
+}
+
+.slot-machine-frame--win::before {
+  opacity: 1;
+  background: linear-gradient(
+    120deg,
+    rgba(248, 113, 113, 0.55),
+    rgba(251, 191, 36, 0.55),
+    rgba(34, 197, 94, 0.55),
+    rgba(59, 130, 246, 0.55),
+    rgba(168, 85, 247, 0.55),
+    rgba(236, 72, 153, 0.55)
+  );
+  background-size: 300% 300%;
+  animation: slot-machine-win-rainbow 1.4s linear infinite;
+}
+
+@keyframes slot-machine-reach-blink {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes slot-machine-win-rainbow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
