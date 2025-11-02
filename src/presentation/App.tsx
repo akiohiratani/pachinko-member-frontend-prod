@@ -4,7 +4,10 @@ import { SYMBOLS } from "../domain/symbols";
 import { SoundEffects } from "../infrastructure/audio/SoundEffects";
 import { SlotWebSocketGateway } from "../infrastructure/slotWebSocketGateway";
 import { SlotMachineManager } from "../usecases/slotMachineManager";
-import type { RoundStartPayload } from "../usecases/slotMachineManager";
+import type {
+  RoundPlan,
+  RoundStartPayload,
+} from "../usecases/slotMachineManager";
 import { SlotMachine } from "./components/SlotMachine";
 import { WelcomeModal } from "./components/WelcomeModal";
 import { useSlotLayout } from "./hooks/useSlotLayout";
@@ -96,10 +99,6 @@ export default function App() {
   const handleRoundStart = useCallback(
     (payload: RoundStartPayload) => {
       const plan = slotManager.planRound(payload);
-      setTargetIndexes(plan.targetIndexes);
-      setSpinBaseMs(plan.baseSpinDurationMs);
-      setReachExtraDelayMs(plan.reachExtraDelayMs);
-
       if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
       if (reachStartTimerRef.current) {
@@ -111,26 +110,33 @@ export default function App() {
         highlightTimerRef.current = null;
       }
 
-      const shouldBlinkReach =
-        // 当たり・外れを問わず左右の図柄が一致したらリーチ演出を発火させ、結果を推測されないようにする。
-        slotManager.reelCount >= 3 &&
-        plan.targetIndexes.length >= 3 &&
-        plan.targetIndexes[0] === plan.targetIndexes[2];
-      // 右リールが停止するまでの時間を算出し、停止後に点滅を開始する。
-      const rightReelStopMs = plan.baseSpinDurationMs + slotManager.reelDelayMs;
-
-      startTimerRef.current = window.setTimeout(() => {
+      const startRound = (roundPlan: RoundPlan) => {
+        startTimerRef.current = null;
+        // ラウンド準備と開始を同期させ、WebSocket メッセージ受信直後に演出へ移行する。
+        setSpinBaseMs(roundPlan.baseSpinDurationMs);
+        setReachExtraDelayMs(roundPlan.reachExtraDelayMs);
         setSpinning(false);
         // ラウンドの開始直前にハイライトをリセットし、演出を新しい結果へ同期させる。
         setHighlightMode("none");
+
+        const shouldBlinkReach =
+          // 当たり・外れを問わず左右の図柄が一致したらリーチ演出を発火させ、結果を推測されないようにする。
+          slotManager.reelCount >= 3 &&
+          roundPlan.targetIndexes.length >= 3 &&
+          roundPlan.targetIndexes[0] === roundPlan.targetIndexes[2];
+        // 右リールが停止するまでの時間を算出し、停止後に点滅を開始する。
+        const rightReelStopMs =
+          roundPlan.baseSpinDurationMs + slotManager.reelDelayMs;
+
         requestAnimationFrame(() =>
           requestAnimationFrame(() => {
+            setTargetIndexes(roundPlan.targetIndexes);
             setSpinning(true);
             if (shouldBlinkReach) {
               reachStartTimerRef.current = window.setTimeout(() => {
                 setHighlightMode("reach");
                 reachStartTimerRef.current = null;
-                const remainingMs = plan.totalSpinMs - rightReelStopMs;
+                const remainingMs = roundPlan.totalSpinMs - rightReelStopMs;
                 if (remainingMs > 0) {
                   highlightTimerRef.current = window.setTimeout(() => {
                     setHighlightMode("none");
@@ -146,9 +152,9 @@ export default function App() {
         if (effects) {
           (async () => {
             try {
-              await effects.playStart(plan.startSound);
+              await effects.playStart(roundPlan.startSound);
             } catch {
-              if (plan.startSound === "win") {
+              if (roundPlan.startSound === "win") {
                 try {
                   await effects.playStart("spin");
                 } catch {
@@ -159,10 +165,10 @@ export default function App() {
           })();
         }
 
-        const totalMs = plan.totalSpinMs;
+        const totalMs = roundPlan.totalSpinMs;
         finishTimerRef.current = window.setTimeout(() => {
           // 全リール停止後に勝利判定を確認し、0.3 秒遅らせて確定音を鳴らす。
-          if (!plan.isWin) return;
+          if (!roundPlan.isWin) return;
           const effects = soundEffectsRef.current;
           if (!effects) return;
           (async () => {
@@ -185,7 +191,16 @@ export default function App() {
             }
           })();
         }, totalMs);
-      }, plan.delayMs);
+      };
+
+      if (plan.delayMs <= 0) {
+        startRound(plan);
+      } else {
+        startTimerRef.current = window.setTimeout(
+          () => startRound(plan),
+          plan.delayMs,
+        );
+      }
     },
     [slotManager],
   );
