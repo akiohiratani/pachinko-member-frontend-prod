@@ -218,12 +218,15 @@
 
 .slot-machine-reel-stage--variant-1 {
   animation-name: slot-machine-reel-bob-left;
+  z-index: 4;
 }
 
 .slot-machine-reel-stage--variant-2 {
   animation-name: slot-machine-reel-bob-center;
+  z-index: 6;
 }
 
 .slot-machine-reel-stage--variant-3 {
   animation-name: slot-machine-reel-bob-right;
+  z-index: 4;
 }
