@@ -66,13 +66,26 @@ export default function App() {
   }, [slotManager]);
 
   useEffect(() => {
-    const effects = new SoundEffects("/win.mp3", "/spinStart.mp3", "/winAlert.mp3");
+    const effects = new SoundEffects(
+      "/win.mp3",
+      "/spinStart.mp3",
+      "/winAlert.mp3",
+      "/reach.mp3",
+    );
     soundEffectsRef.current = effects;
     return () => {
       effects.dispose();
       soundEffectsRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (highlightMode === "reach") {
+      return;
+    }
+    // リーチ演出が終了したら即座に効果音を止め、次の演出で先頭から再生できるようにする。
+    soundEffectsRef.current?.stopReachPulse();
+  }, [highlightMode]);
 
   useEffect(() => {
     roundControllerRef.current = new SlotRoundController(slotManager);
@@ -132,6 +145,13 @@ export default function App() {
     return effects.enable();
   }, []);
 
+  const handleReachBlink = useCallback(() => {
+    // SlotMachine の点滅開始と同じタイミングでリーチ音を再生する。
+    const effects = soundEffectsRef.current;
+    if (!effects) return;
+    void effects.playReachPulse();
+  }, []);
+
   const handleWelcomeTap = useCallback(async () => {
     const ok = await enableSound();
     if (ok) {
@@ -162,6 +182,7 @@ export default function App() {
           containerMax={containerMax}
           symbols={SYMBOLS}
           highlightMode={highlightMode}
+          onReachBlink={handleReachBlink}
         />
       </div>
 

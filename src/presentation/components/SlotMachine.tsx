@@ -18,6 +18,7 @@ type SlotMachineProps = {
   containerMax: number;
   symbols: readonly SymbolDef[];
   highlightMode: "none" | "reach" | "win";
+  onReachBlink?: () => void;
 };
 
 const cyclesPattern = [8, 9, 10];
@@ -63,6 +64,7 @@ export function SlotMachine({
   containerMax,
   symbols,
   highlightMode,
+  onReachBlink,
 }: SlotMachineProps) {
   const outerWidth = reelCount * reelWidth + (reelCount - 1) * gap;
   const machineMaxWidth = Math.min(outerWidth, containerMax);
@@ -92,11 +94,13 @@ export function SlotMachine({
       }
       const index = Math.floor(Math.random() * colors.length);
       setReachBlinkColor(colors[index]);
+      // 点滅が始まった瞬間にコールバックを呼び出し、リーチ音の再生タイミングを合わせる。
+      onReachBlink?.();
     };
     toggleColor();
     const timer = window.setInterval(toggleColor, 360);
     return () => window.clearInterval(timer);
-  }, [spinning, highlightMode]);
+  }, [spinning, highlightMode, onReachBlink]);
 
   const machineStyle: CSSProperties = {
     width: "100%",
