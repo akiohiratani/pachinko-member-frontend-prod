@@ -19,10 +19,11 @@ type SlotMachineProps = {
   symbols: readonly SymbolDef[];
   highlightMode: "none" | "reach" | "win";
   onReachBlink?: () => void;
+  orientation: "horizontal" | "vertical";
 };
 
 const cyclesPattern = [8, 9, 10];
-// リールが停止する順番を「左 → 右 → 真ん中」となるように定義する。
+// リールが停止する順番を「端 → 反対の端 → 中央」となるように定義する。
 const STOP_ORDER = [0, 2, 1];
 
 function createInitialIndexes(reelCount: number, symbols: readonly SymbolDef[]) {
@@ -65,8 +66,12 @@ export function SlotMachine({
   symbols,
   highlightMode,
   onReachBlink,
+  orientation,
 }: SlotMachineProps) {
-  const outerWidth = reelCount * reelWidth + (reelCount - 1) * gap;
+  const outerWidth =
+    orientation === "horizontal"
+      ? reelCount * reelWidth + (reelCount - 1) * gap
+      : reelWidth;
   const machineMaxWidth = Math.min(outerWidth, containerMax);
   // リーチ演出中は色をランダムに切り替えて枠の点滅色を決定する。
   const [reachBlinkColor, setReachBlinkColor] = useState<string | null>(null);
@@ -108,18 +113,28 @@ export function SlotMachine({
     margin: "0 auto",
     display: "flex",
     justifyContent: "center",
+    alignItems: "center",
     transition: "max-width 0.3s ease",
   };
 
-  return (
-    <div className="slot-machine" style={machineStyle}>
-      <div
-        style={{
+  const layoutStyle: CSSProperties =
+    orientation === "horizontal"
+      ? {
           display: "grid",
           gridTemplateColumns: `repeat(${reelCount}, ${reelWidth}px)`,
           gap,
-        }}
-      >
+        }
+      : {
+          display: "grid",
+          gridTemplateRows: `repeat(${reelCount}, ${itemHeight}px)`,
+          gap,
+          width: reelWidth,
+          justifyItems: "stretch",
+        };
+
+  return (
+    <div className="slot-machine" style={machineStyle}>
+      <div style={layoutStyle}>
         {Array.from({ length: reelCount }).map((_, reelIndex) => {
           // STOP_ORDER に存在するインデックスをもとに、個々のリールが何番目に停止するかを判断する。
           const orderPosition = STOP_ORDER.indexOf(reelIndex);
