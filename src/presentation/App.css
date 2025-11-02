@@ -1,0 +1,74 @@
+.app {
+  width: 100%;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background:
+    radial-gradient(120% 160% at 50% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
+    radial-gradient(100% 120% at 50% 120%, rgba(20, 184, 166, 0.1), transparent 72%);
+  overflow: hidden;
+  color: inherit;
+  padding-top: max(clamp(24px, 10vw, 64px), env(safe-area-inset-top));
+  padding-bottom: max(clamp(24px, 10vw, 64px), env(safe-area-inset-bottom));
+  padding-left: max(clamp(16px, 7vw, 48px), env(safe-area-inset-left));
+  padding-right: max(clamp(16px, 7vw, 48px), env(safe-area-inset-right));
+}
+
+.app::before {
+  content: "";
+  position: absolute;
+  inset: clamp(18px, 6vw, 56px);
+  border-radius: clamp(28px, 6vw, 48px);
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app--mobile {
+  justify-content: flex-start;
+}
+
+.app--desktop {
+  padding-top: max(clamp(48px, 8vw, 120px), env(safe-area-inset-top));
+  padding-bottom: max(clamp(48px, 8vw, 120px), env(safe-area-inset-bottom));
+  padding-left: max(clamp(48px, 8vw, 132px), env(safe-area-inset-left));
+  padding-right: max(clamp(48px, 8vw, 132px), env(safe-area-inset-right));
+}
+
+.app__surface {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 960px);
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: clamp(14px, 3vw, 28px);
+}
+
+.app__surface::before {
+  content: "";
+  position: absolute;
+  inset: clamp(8px, 2.6vw, 22px);
+  border-radius: clamp(26px, 5vw, 40px);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.68));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  pointer-events: none;
+  z-index: -1;
+}
+
+@media (min-width: 1280px) {
+  .app::before {
+    inset: clamp(32px, 5vw, 92px);
+    border-radius: clamp(40px, 6vw, 60px);
+  }
+
+  .app__surface {
+    padding: clamp(18px, 2vw, 36px);
+  }
+}

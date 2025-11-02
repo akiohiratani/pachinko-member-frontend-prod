@@ -41,7 +41,9 @@ export function SlotMachine({
   symbols,
   highlightMode,
 }: SlotMachineProps) {
-  const outerWidth = reelCount * reelWidth + (reelCount - 1) * gap + framePadding * 2;
+  const outerWidth =
+    reelCount * reelWidth + (reelCount - 1) * gap + framePadding * 2;
+  const frameMaxWidth = Math.min(outerWidth, containerMax);
   // リーチ演出中は色をランダムに切り替えて枠の点滅色を決定する。
   const [reachBlinkColor, setReachBlinkColor] = useState<string | null>(null);
 
@@ -71,11 +73,20 @@ export function SlotMachine({
   }
 
   const frameStyle: CSSProperties & { "--blink-color"?: string } = {
-    width: Math.min(outerWidth, containerMax),
+    width: "100%",
+    maxWidth: frameMaxWidth,
     padding: framePadding,
-    borderRadius: 20,
+    borderRadius: Math.max(20, Math.round(framePadding * 2.2)),
     transform: "translateZ(0)",
     position: "relative",
+    margin: "0 auto",
+    background:
+      "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(241,245,249,0.9))",
+    border: "1px solid rgba(148, 163, 184, 0.35)",
+    boxShadow: "0 28px 60px rgba(15, 23, 42, 0.2)",
+    backdropFilter: "blur(18px)",
+    WebkitBackdropFilter: "blur(18px)",
+    transition: "max-width 0.3s ease",
   };
 
   if (reachBlinkColor) {
