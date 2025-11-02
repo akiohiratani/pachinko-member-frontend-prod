@@ -69,18 +69,11 @@ export function SlotMachine({
     // リーチ中のみ擬似要素に点滅アニメーションを適用する。
     frameClassNames.push("slot-machine-frame--reach");
   }
-  if (highlightMode === "win") {
-    // 揃った際はリール停止後も虹色のグラデーションを継続させる。
-    frameClassNames.push("slot-machine-frame--win");
-  }
 
   const frameStyle: CSSProperties & { "--blink-color"?: string } = {
     width: Math.min(outerWidth, containerMax),
     padding: framePadding,
-    border: "1px solid #e5e7eb",
     borderRadius: 20,
-    background: "#ffffff",
-    boxShadow: "0 12px 28px rgba(15,23,42,0.10)",
     transform: "translateZ(0)",
     position: "relative",
   };
