@@ -55,7 +55,6 @@ export function WelcomeModal({ onTap }: WelcomeModalProps) {
           }}
         >
           画面をタップして開始します。<br />
-          音声を有効化し、サーバーに接続します。
         </div>
         <div
           style={{
