@@ -8,13 +8,37 @@ import type { RoundStartPayload } from "../usecases/slotMachineManager";
 import { SlotMachine } from "./components/SlotMachine";
 import { WelcomeModal } from "./components/WelcomeModal";
 import { useSlotLayout } from "./hooks/useSlotLayout";
+import "./App.css";
 
 const DEFAULT_WEBSOCKET_URL =
   "wss://12fk8ea9sb.execute-api.ap-northeast-1.amazonaws.com/Prod?role=member";
 
 export default function App() {
   const slotManager = useMemo(() => new SlotMachineManager(), []);
-  const layout = useSlotLayout(slotManager.reelCount);
+  const {
+    isDesktop,
+    containerMax,
+    gap,
+    reelWidth,
+    itemHeight,
+  } = useSlotLayout(slotManager.reelCount);
+  const machineMaxWidth = useMemo(
+    () =>
+      Math.min(
+        slotManager.reelCount * reelWidth + (slotManager.reelCount - 1) * gap,
+        containerMax,
+      ),
+    [slotManager.reelCount, reelWidth, gap, containerMax],
+  );
+  const surfaceMaxWidth = useMemo(
+    () =>
+      Math.min(Math.max(machineMaxWidth + 32, 320), isDesktop ? 960 : 720),
+    [machineMaxWidth, isDesktop],
+  );
+  const appClassName = useMemo(
+    () => `app ${isDesktop ? "app--desktop" : "app--mobile"}`,
+    [isDesktop],
+  );
 
   const [spinning, setSpinning] = useState(false);
   const [targetIndexes, setTargetIndexes] = useState<number[]>(() =>
@@ -178,32 +202,29 @@ export default function App() {
   }, [enableSound, connectWebSocket]);
 
   return (
-    <div
-      style={{
-        minHeight: "100svh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f6f7f9",
-        padding: layout.isDesktop ? "32px 24px" : "16px 12px",
-      }}
-    >
-      <SlotMachine
-        spinning={spinning}
-        targetIndexes={targetIndexes}
-        reelCount={slotManager.reelCount}
-        baseSpinMs={spinBaseMs}
-        reelDelayMs={slotManager.reelDelayMs}
-        easing={slotManager.easing}
-        reachExtraDelayMs={reachExtraDelayMs}
-        reelWidth={layout.reelWidth}
-        itemHeight={layout.itemHeight}
-        framePadding={layout.framePadding}
-        gap={layout.gap}
-        containerMax={layout.containerMax}
-        symbols={SYMBOLS}
-        highlightMode={highlightMode}
-      />
+    <div className={appClassName}>
+      <div
+        className="app__surface"
+        style={{
+          maxWidth: `${Math.round(surfaceMaxWidth)}px`,
+        }}
+      >
+        <SlotMachine
+          spinning={spinning}
+          targetIndexes={targetIndexes}
+          reelCount={slotManager.reelCount}
+          baseSpinMs={spinBaseMs}
+          reelDelayMs={slotManager.reelDelayMs}
+          easing={slotManager.easing}
+          reachExtraDelayMs={reachExtraDelayMs}
+          reelWidth={reelWidth}
+          itemHeight={itemHeight}
+          gap={gap}
+          containerMax={containerMax}
+          symbols={SYMBOLS}
+          highlightMode={highlightMode}
+        />
+      </div>
 
       {highlightMode === "win" && <div className="slot-machine-win-overlay" />}
       {showWelcome && <WelcomeModal onTap={handleWelcomeTap} />}

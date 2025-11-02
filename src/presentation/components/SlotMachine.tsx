@@ -14,7 +14,6 @@ type SlotMachineProps = {
   reachExtraDelayMs: number;
   reelWidth: number;
   itemHeight: number;
-  framePadding: number;
   gap: number;
   containerMax: number;
   symbols: readonly SymbolDef[];
@@ -35,13 +34,13 @@ export function SlotMachine({
   reachExtraDelayMs,
   reelWidth,
   itemHeight,
-  framePadding,
   gap,
   containerMax,
   symbols,
   highlightMode,
 }: SlotMachineProps) {
-  const outerWidth = reelCount * reelWidth + (reelCount - 1) * gap + framePadding * 2;
+  const outerWidth = reelCount * reelWidth + (reelCount - 1) * gap;
+  const machineMaxWidth = Math.min(outerWidth, containerMax);
   // リーチ演出中は色をランダムに切り替えて枠の点滅色を決定する。
   const [reachBlinkColor, setReachBlinkColor] = useState<string | null>(null);
 
@@ -51,39 +50,36 @@ export function SlotMachine({
       return;
     }
     const colors = [
-      "rgba(59,130,246,0.55)",
-      "rgba(239,68,68,0.55)",
-      "rgba(34,197,94,0.55)",
+      "rgba(59,130,246,0.45)",
+      "rgba(239,68,68,0.45)",
+      "rgba(34,197,94,0.45)",
     ];
-    const pickColor = () => {
+    let visible = false;
+    const toggleColor = () => {
+      visible = !visible;
+      if (!visible) {
+        setReachBlinkColor(null);
+        return;
+      }
       const index = Math.floor(Math.random() * colors.length);
       setReachBlinkColor(colors[index]);
     };
-    pickColor();
-    const timer = window.setInterval(pickColor, 420);
+    toggleColor();
+    const timer = window.setInterval(toggleColor, 360);
     return () => window.clearInterval(timer);
   }, [spinning, highlightMode]);
 
-  const frameClassNames = ["slot-machine-frame"];
-  if (spinning && highlightMode === "reach") {
-    // リーチ中のみ擬似要素に点滅アニメーションを適用する。
-    frameClassNames.push("slot-machine-frame--reach");
-  }
-
-  const frameStyle: CSSProperties & { "--blink-color"?: string } = {
-    width: Math.min(outerWidth, containerMax),
-    padding: framePadding,
-    borderRadius: 20,
-    transform: "translateZ(0)",
-    position: "relative",
+  const machineStyle: CSSProperties = {
+    width: "100%",
+    maxWidth: machineMaxWidth,
+    margin: "0 auto",
+    display: "flex",
+    justifyContent: "center",
+    transition: "max-width 0.3s ease",
   };
 
-  if (reachBlinkColor) {
-    frameStyle["--blink-color"] = reachBlinkColor;
-  }
-
   return (
-    <div className={frameClassNames.join(" ")} style={frameStyle}>
+    <div className="slot-machine" style={machineStyle}>
       <div
         style={{
           display: "grid",
@@ -112,6 +108,9 @@ export function SlotMachine({
               easing={easing}
               spinning={spinning}
               symbols={symbols}
+              highlightColor={
+                spinning && highlightMode === "reach" ? reachBlinkColor : null
+              }
             />
           );
         })}
