@@ -10,6 +10,7 @@ type SlotReelProps = {
   easing: string;
   spinning: boolean;
   symbols: readonly SymbolDef[];
+  highlightColor: string | null;
 };
 
 export function SlotReel({
@@ -21,6 +22,7 @@ export function SlotReel({
   easing,
   spinning,
   symbols,
+  highlightColor,
 }: SlotReelProps) {
   const symbolCount = symbols.length;
   const listLength = cycles * symbolCount + symbolCount;
@@ -62,6 +64,10 @@ export function SlotReel({
         borderRadius: 12,
         outline: "1px solid #e5e7eb",
         position: "relative",
+        boxShadow: highlightColor
+          ? `0 20px 40px rgba(15,23,42,0.25), 0 0 0 4px ${highlightColor}`
+          : "0 20px 40px rgba(15,23,42,0.18)",
+        transition: "box-shadow 0.3s ease",
       }}
     >
       <div style={trackStyle}>

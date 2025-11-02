@@ -19,33 +19,21 @@ export default function App() {
     isDesktop,
     containerMax,
     gap,
-    framePadding,
     reelWidth,
     itemHeight,
   } = useSlotLayout(slotManager.reelCount);
   const machineMaxWidth = useMemo(
     () =>
       Math.min(
-        slotManager.reelCount * reelWidth +
-          (slotManager.reelCount - 1) * gap +
-          framePadding * 2,
+        slotManager.reelCount * reelWidth + (slotManager.reelCount - 1) * gap,
         containerMax,
       ),
-    [
-      slotManager.reelCount,
-      reelWidth,
-      gap,
-      framePadding,
-      containerMax,
-    ],
+    [slotManager.reelCount, reelWidth, gap, containerMax],
   );
   const surfaceMaxWidth = useMemo(
     () =>
-      Math.min(
-        Math.max(machineMaxWidth + Math.max(framePadding * 2, 32), 320),
-        isDesktop ? 960 : 720,
-      ),
-    [machineMaxWidth, framePadding, isDesktop],
+      Math.min(Math.max(machineMaxWidth + 32, 320), isDesktop ? 960 : 720),
+    [machineMaxWidth, isDesktop],
   );
   const appClassName = useMemo(
     () => `app ${isDesktop ? "app--desktop" : "app--mobile"}`,
@@ -231,7 +219,6 @@ export default function App() {
           reachExtraDelayMs={reachExtraDelayMs}
           reelWidth={reelWidth}
           itemHeight={itemHeight}
-          framePadding={framePadding}
           gap={gap}
           containerMax={containerMax}
           symbols={SYMBOLS}
