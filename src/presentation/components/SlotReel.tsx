@@ -6,6 +6,7 @@ type SlotReelProps = {
   reelWidth: number;
   cycles: number;
   targetIndex: number;
+  initialIndex?: number;
   spinMs: number;
   easing: string;
   spinning: boolean;
@@ -18,6 +19,7 @@ export function SlotReel({
   reelWidth,
   cycles,
   targetIndex,
+  initialIndex: initialIndexProp,
   spinMs,
   easing,
   spinning,
@@ -31,9 +33,12 @@ export function SlotReel({
     [listLength, symbols, symbolCount],
   );
 
-  const [initialIndex] = React.useState(() =>
-    symbolCount > 0 ? Math.floor(Math.random() * symbolCount) : 0,
-  );
+  const [initialIndex] = React.useState(() => {
+    if (typeof initialIndexProp === "number") {
+      return initialIndexProp % (symbolCount || 1);
+    }
+    return symbolCount > 0 ? Math.floor(Math.random() * symbolCount) : 0;
+  });
   const [hasStarted, setHasStarted] = React.useState(false);
 
   React.useEffect(() => {

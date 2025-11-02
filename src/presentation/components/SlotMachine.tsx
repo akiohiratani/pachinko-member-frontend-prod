@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import type { SymbolDef } from "../../domain/symbols";
 import { SlotReel } from "./SlotReel";
@@ -24,6 +24,31 @@ const cyclesPattern = [8, 9, 10];
 // リールが停止する順番を「左 → 右 → 真ん中」となるように定義する。
 const STOP_ORDER = [0, 2, 1];
 
+function createInitialIndexes(reelCount: number, symbols: readonly SymbolDef[]) {
+  const symbolCount = symbols.length;
+  if (reelCount <= 0) return [];
+  if (symbolCount <= 0) return Array(reelCount).fill(0);
+
+  const indexes = Array.from({ length: reelCount }, () =>
+    Math.floor(Math.random() * symbolCount),
+  );
+
+  if (reelCount === 1 || symbolCount === 1) {
+    return indexes;
+  }
+
+  const first = indexes[0];
+  const allSame = indexes.every((value) => value === first);
+  if (!allSame) {
+    return indexes;
+  }
+
+  const replaceAt = Math.floor(Math.random() * reelCount);
+  const alternativeOffset = Math.floor(Math.random() * (symbolCount - 1)) + 1;
+  indexes[replaceAt] = (first + alternativeOffset) % symbolCount;
+  return indexes;
+}
+
 export function SlotMachine({
   spinning,
   targetIndexes,
@@ -43,6 +68,10 @@ export function SlotMachine({
   const machineMaxWidth = Math.min(outerWidth, containerMax);
   // リーチ演出中は色をランダムに切り替えて枠の点滅色を決定する。
   const [reachBlinkColor, setReachBlinkColor] = useState<string | null>(null);
+  const initialIndexes = useMemo(
+    () => createInitialIndexes(reelCount, symbols),
+    [reelCount, symbols],
+  );
 
   useEffect(() => {
     if (!spinning || highlightMode !== "reach") {
@@ -104,6 +133,7 @@ export function SlotMachine({
               reelWidth={reelWidth}
               cycles={cyclesPattern[reelIndex % cyclesPattern.length]}
               targetIndex={targetIndexes[reelIndex] ?? 0}
+              initialIndex={initialIndexes[reelIndex] ?? 0}
               spinMs={spinMs}
               easing={easing}
               spinning={spinning}
