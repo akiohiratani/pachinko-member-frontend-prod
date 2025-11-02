@@ -23,12 +23,17 @@ export default function App() {
   const [spinBaseMs, setSpinBaseMs] = useState<number>(SLOT_MACHINE_CONFIG.baseSpinMs);
   // リーチ時の追加演出時間を個別に管理し、SlotMachine へ伝播させる。
   const [reachExtraDelayMs, setReachExtraDelayMs] = useState<number>(0);
+  // UI の演出種別を保持し、SlotMachine 側で点滅エフェクトを切り替える。
+  const [highlightMode, setHighlightMode] = useState<"none" | "reach" | "win">("none");
   const [showWelcome, setShowWelcome] = useState(true);
 
   const soundEffectsRef = useRef<SoundEffects | null>(null);
   const websocketRef = useRef<SlotWebSocketGateway | null>(null);
   const startTimerRef = useRef<number | null>(null);
   const finishTimerRef = useRef<number | null>(null);
+  // リーチ開始と終了のタイマーを個別に保持し、点滅の発火タイミングを制御する。
+  const reachStartTimerRef = useRef<number | null>(null);
+  const highlightTimerRef = useRef<number | null>(null);
 
   const websocketUrl = useMemo(
     () => import.meta.env.VITE_WEBSOCKET_URL ?? DEFAULT_WEBSOCKET_URL,
@@ -52,6 +57,14 @@ export default function App() {
     return () => {
       if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+      if (reachStartTimerRef.current) {
+        window.clearTimeout(reachStartTimerRef.current);
+        reachStartTimerRef.current = null;
+      }
+      if (highlightTimerRef.current) {
+        window.clearTimeout(highlightTimerRef.current);
+        highlightTimerRef.current = null;
+      }
       websocketRef.current?.disconnect();
     };
   }, []);
@@ -65,11 +78,44 @@ export default function App() {
 
       if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+      if (reachStartTimerRef.current) {
+        window.clearTimeout(reachStartTimerRef.current);
+        reachStartTimerRef.current = null;
+      }
+      if (highlightTimerRef.current) {
+        window.clearTimeout(highlightTimerRef.current);
+        highlightTimerRef.current = null;
+      }
+
+      const shouldBlinkReach =
+        !plan.isWin &&
+        slotManager.reelCount >= 3 &&
+        plan.targetIndexes.length >= 3 &&
+        plan.targetIndexes[0] === plan.targetIndexes[2];
+      // 右リールが停止するまでの時間を算出し、停止後に点滅を開始する。
+      const rightReelStopMs = plan.baseSpinDurationMs + slotManager.reelDelayMs;
 
       startTimerRef.current = window.setTimeout(() => {
         setSpinning(false);
+        // ラウンドの開始直前にハイライトをリセットし、演出を新しい結果へ同期させる。
+        setHighlightMode("none");
         requestAnimationFrame(() =>
-          requestAnimationFrame(() => setSpinning(true)),
+          requestAnimationFrame(() => {
+            setSpinning(true);
+            if (shouldBlinkReach) {
+              reachStartTimerRef.current = window.setTimeout(() => {
+                setHighlightMode("reach");
+                reachStartTimerRef.current = null;
+                const remainingMs = plan.totalSpinMs - rightReelStopMs;
+                if (remainingMs > 0) {
+                  highlightTimerRef.current = window.setTimeout(() => {
+                    setHighlightMode("none");
+                    highlightTimerRef.current = null;
+                  }, remainingMs);
+                }
+              }, Math.max(0, rightReelStopMs));
+            }
+          }),
         );
 
         const effects = soundEffectsRef.current;
@@ -95,7 +141,15 @@ export default function App() {
           if (!plan.isWin) return;
           const effects = soundEffectsRef.current;
           if (!effects) return;
-          void effects.playWinAlert();
+          (async () => {
+            try {
+              await effects.playWinAlert();
+              // 大当たり音の再生が完了したタイミングで虹色の演出を開始する。
+              setHighlightMode("win");
+            } catch {
+              /* 音声再生に失敗した場合は演出を開始しない。 */
+            }
+          })();
         }, totalMs);
       }, plan.delayMs);
     },
@@ -148,6 +202,7 @@ export default function App() {
         gap={layout.gap}
         containerMax={layout.containerMax}
         symbols={SYMBOLS}
+        highlightMode={highlightMode}
       />
 
       {showWelcome && <WelcomeModal onTap={handleWelcomeTap} />}
