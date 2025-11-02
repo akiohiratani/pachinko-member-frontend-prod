@@ -96,7 +96,7 @@ export default function App() {
           const effects = soundEffectsRef.current;
           if (!effects) return;
           void effects.playWinAlert();
-        }, totalMs + 300);
+        }, totalMs);
       }, plan.delayMs);
     },
     [slotManager],
