@@ -38,11 +38,10 @@ export class SlotMachineManager {
     const targetIndexes = this.decideTargets(isWin);
     // 左右のリールが揃っていて中央のみが異なる場合をリーチとみなす。
     const isReach =
-      !isWin &&
       SLOT_MACHINE_CONFIG.reelCount >= 3 &&
       targetIndexes[0] === targetIndexes[2];
     // リーチ時は 5~10 秒の余韻を最後のリールへ追加し、演出を長めにする。
-    const reachExtraDelayMs = isReach ? randomInt(this.random, 5000, 10000) : 0;
+    const reachExtraDelayMs = isReach ? randomInt(this.random, 20000, 25000) : 3000;
 
     // リーチでない通常時の総演出時間を決めたうえで、最後のリール分を除いた基本時間を算出する。
     // リーチの追加演出分は最後のリールに加算されるため、totalSpinMs にのみ反映する。
