@@ -33,7 +33,7 @@ export default function App() {
   );
   const surfaceMaxWidth = useMemo(
     () =>
-      Math.min(Math.max(machineMaxWidth + 32, 320), isDesktop ? 960 : 720),
+      Math.min(Math.max(machineMaxWidth + 72, 360), isDesktop ? 1080 : 800),
     [machineMaxWidth, isDesktop],
   );
   const appClassName = useMemo(

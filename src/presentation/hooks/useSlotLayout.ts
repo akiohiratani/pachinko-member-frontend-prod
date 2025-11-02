@@ -12,14 +12,19 @@ export function useSlotLayout(reelCount: number) {
   }, []);
 
   const isDesktop = viewportWidth >= 1024;
-  const containerMax = Math.min(viewportWidth * 0.92, isDesktop ? 720 : 420);
-  const gap = isDesktop ? 16 : 10;
+  const containerMax = Math.min(
+    viewportWidth * (isDesktop ? 0.9 : 0.96),
+    isDesktop ? 900 : 540,
+  );
+  const gap = isDesktop ? 20 : 14;
 
   const rawReel = (containerMax - gap * (reelCount - 1)) / reelCount;
-  const minReel = isDesktop ? 88 : 72;
-  const maxReel = isDesktop ? 152 : 120;
+  const minReel = isDesktop ? 104 : 84;
+  const maxReel = isDesktop ? 192 : 148;
   const reelWidth = Math.max(minReel, Math.min(maxReel, Math.floor(rawReel)));
-  const itemHeight = isDesktop ? Math.round(reelWidth * 1.05) : Math.round(reelWidth * 0.92);
+  const itemHeight = isDesktop
+    ? Math.round(reelWidth * 1.15)
+    : Math.round(reelWidth * 1.02);
 
   return {
     isDesktop,
