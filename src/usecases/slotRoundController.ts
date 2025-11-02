@@ -115,6 +115,7 @@ export class SlotRoundController {
         this.firstFrame = null;
         this.secondFrame = this.animation.requestAnimationFrame(() => {
           this.secondFrame = null;
+          // 受信直後のフレームで即座に回転を開始し、2 回目以降でもラグが生まれないようにする。
           callbacks.onSpin(plan.targetIndexes);
           if (shouldTriggerReach) {
             this.scheduleReach(plan, rightReelStopMs, callbacks);
@@ -127,6 +128,7 @@ export class SlotRoundController {
     };
 
     if (plan.delayMs <= 0) {
+      // 遅延指定が無い場合は WebSocket の受信直後に即時実行して初期フレームを合わせる。
       startRound();
     } else {
       this.startTimer = this.timers.setTimeout(startRound, plan.delayMs);
