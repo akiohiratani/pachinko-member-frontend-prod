@@ -72,7 +72,9 @@ export function SlotReel({
         boxShadow: highlightColor
           ? `0 20px 40px rgba(15,23,42,0.25), 0 0 0 4px ${highlightColor}`
           : "0 20px 40px rgba(15,23,42,0.18)",
-        transition: "box-shadow 0.3s ease",
+        transition:
+          "box-shadow 0.3s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
+        transform: spinning ? "scale(1.12)" : "scale(1)",
       }}
     >
       <div style={trackStyle}>
@@ -94,12 +96,15 @@ export function SlotReel({
               src={symbol.src}
               alt={symbol.alt}
               style={{
-                width: "78%",
-                height: "78%",
+                width: "80%",
+                height: "80%",
                 objectFit: "contain",
                 filter: "drop-shadow(0 2px 3px rgba(15,23,42,0.10))",
                 userSelect: "none",
                 pointerEvents: "none",
+                transform: spinning ? "scale(1.18)" : "scale(1)",
+                transition:
+                  "transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), filter 0.35s ease",
               }}
               draggable={false}
             />

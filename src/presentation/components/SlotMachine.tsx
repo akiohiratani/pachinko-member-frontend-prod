@@ -113,9 +113,14 @@ export function SlotMachine({
   const machineClassName = spinning
     ? "slot-machine-inner slot-machine-inner--spinning"
     : "slot-machine-inner";
+  const wrapperClassName = spinning
+    ? "slot-machine-wrapper slot-machine-wrapper--spinning"
+    : "slot-machine-wrapper";
+
+  const stageBaseClass = "slot-machine-reel-stage";
 
   return (
-    <div className="slot-machine-wrapper">
+    <div className={wrapperClassName}>
       {spinning && (
         <div className="slot-machine-spin-overlay" aria-hidden="true">
           <div className="slot-machine-spin-overlay__pulse" />
@@ -142,22 +147,39 @@ export function SlotMachine({
             const spinMs =
               baseSpinMs + reelDelayMs * sequentialPosition + reachDelay;
 
+            const stageClassName = [
+              stageBaseClass,
+              spinning && `${stageBaseClass}--spinning`,
+              spinning &&
+                `${stageBaseClass}--variant-${(reelIndex % 3) + 1}`,
+            ]
+              .filter(Boolean)
+              .join(" ");
+
             return (
-              <SlotReel
+              <div
                 key={reelIndex}
-                itemHeight={itemHeight}
-                reelWidth={reelWidth}
-                cycles={cyclesPattern[reelIndex % cyclesPattern.length]}
-                targetIndex={targetIndexes[reelIndex] ?? 0}
-                initialIndex={initialIndexes[reelIndex] ?? 0}
-                spinMs={spinMs}
-                easing={easing}
-                spinning={spinning}
-                symbols={symbols}
-                highlightColor={
-                  spinning && highlightMode === "reach" ? reachBlinkColor : null
-                }
-              />
+                className={stageClassName}
+                style={{
+                  width: reelWidth,
+                  animationDelay: spinning ? `${reelIndex * -0.18}s` : undefined,
+                }}
+              >
+                <SlotReel
+                  itemHeight={itemHeight}
+                  reelWidth={reelWidth}
+                  cycles={cyclesPattern[reelIndex % cyclesPattern.length]}
+                  targetIndex={targetIndexes[reelIndex] ?? 0}
+                  initialIndex={initialIndexes[reelIndex] ?? 0}
+                  spinMs={spinMs}
+                  easing={easing}
+                  spinning={spinning}
+                  symbols={symbols}
+                  highlightColor={
+                    spinning && highlightMode === "reach" ? reachBlinkColor : null
+                  }
+                />
+              </div>
             );
           })}
         </div>
