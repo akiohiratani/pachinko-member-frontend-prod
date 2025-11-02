@@ -29,6 +29,7 @@ export default function App() {
   const websocketRef = useRef<SlotWebSocketGateway | null>(null);
   const startTimerRef = useRef<number | null>(null);
   const finishTimerRef = useRef<number | null>(null);
+  const winSoundTimerRef = useRef<number | null>(null);
 
   const websocketUrl = useMemo(
     () => import.meta.env.VITE_WEBSOCKET_URL ?? DEFAULT_WEBSOCKET_URL,
@@ -40,7 +41,7 @@ export default function App() {
   }, [slotManager]);
 
   useEffect(() => {
-    const effects = new SoundEffects("/win.mp3", "/spinStart.mp3");
+    const effects = new SoundEffects("/spinStart.mp3", "/winAlert.mp3");
     soundEffectsRef.current = effects;
     return () => {
       effects.dispose();
@@ -50,8 +51,18 @@ export default function App() {
 
   useEffect(() => {
     return () => {
-      if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
-      if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+      if (startTimerRef.current) {
+        window.clearTimeout(startTimerRef.current);
+        startTimerRef.current = null;
+      }
+      if (finishTimerRef.current) {
+        window.clearTimeout(finishTimerRef.current);
+        finishTimerRef.current = null;
+      }
+      if (winSoundTimerRef.current) {
+        window.clearTimeout(winSoundTimerRef.current);
+        winSoundTimerRef.current = null;
+      }
       websocketRef.current?.disconnect();
     };
   }, []);
@@ -63,8 +74,18 @@ export default function App() {
       setSpinBaseMs(plan.baseSpinDurationMs);
       setReachExtraDelayMs(plan.reachExtraDelayMs);
 
-      if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
-      if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+      if (startTimerRef.current) {
+        window.clearTimeout(startTimerRef.current);
+        startTimerRef.current = null;
+      }
+      if (finishTimerRef.current) {
+        window.clearTimeout(finishTimerRef.current);
+        finishTimerRef.current = null;
+      }
+      if (winSoundTimerRef.current) {
+        window.clearTimeout(winSoundTimerRef.current);
+        winSoundTimerRef.current = null;
+      }
 
       startTimerRef.current = window.setTimeout(() => {
         setSpinning(false);
@@ -73,24 +94,17 @@ export default function App() {
         );
 
         const effects = soundEffectsRef.current;
-        if (effects) {
-          (async () => {
-            try {
-              await effects.playStart(plan.startSound);
-            } catch {
-              if (plan.startSound === "win") {
-                try {
-                  await effects.playStart("spin");
-                } catch {
-                  /* noop */
-                }
-              }
-            }
-          })();
-        }
+        effects?.playSpinStart();
 
         const totalMs = plan.totalSpinMs;
         finishTimerRef.current = window.setTimeout(() => undefined, totalMs + 80);
+
+        if (plan.isWin && effects) {
+          winSoundTimerRef.current = window.setTimeout(() => {
+            winSoundTimerRef.current = null;
+            effects.playWinAlert();
+          }, totalMs + 1000);
+        }
       }, plan.delayMs);
     },
     [slotManager],

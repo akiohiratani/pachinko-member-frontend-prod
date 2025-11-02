@@ -13,7 +13,6 @@ export type RoundPlan = {
   baseSpinDurationMs: number;
   delayMs: number;
   totalSpinMs: number;
-  startSound: "win" | "spin";
   isWin: boolean;
   /**
    * リーチが発生した際に最後のリールへ追加する演出用のディレイ時間。
@@ -59,15 +58,11 @@ export class SlotMachineManager {
     );
 
     const delayMs = this.calculateDelay(payload.startAt, now);
-    const startSound: "win" | "spin" =
-      isWin && this.random.float() < SLOT_MACHINE_CONFIG.winStartSoundProbability ? "win" : "spin";
-
     return {
       targetIndexes,
       baseSpinDurationMs,
       delayMs,
       totalSpinMs: baseSpinDurationMs + sequentialDelayTotal + reachExtraDelayMs,
-      startSound,
       isWin,
       reachExtraDelayMs,
     };
