@@ -205,6 +205,7 @@ export default function App() {
         highlightMode={highlightMode}
       />
 
+      {highlightMode === "win" && <div className="slot-machine-win-overlay" />}
       {showWelcome && <WelcomeModal onTap={handleWelcomeTap} />}
     </div>
   );
