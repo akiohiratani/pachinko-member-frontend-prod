@@ -5,20 +5,24 @@
 export class SoundEffects {
   private winAudio: HTMLAudioElement | null = null;
   private spinAudio: HTMLAudioElement | null = null;
+  private winAlertAudio: HTMLAudioElement | null = null;
 
-  constructor(winSrc: string, spinSrc: string) {
+  constructor(winSrc: string, spinSrc: string, winAlertSrc: string) {
     if (typeof Audio !== "undefined") {
       this.winAudio = new Audio(winSrc);
       this.winAudio.preload = "auto";
       this.spinAudio = new Audio(spinSrc);
       this.spinAudio.preload = "auto";
+      // 勝利時の確定音もあらかじめ生成しておき、遅延なく再生できるようにする。
+      this.winAlertAudio = new Audio(winAlertSrc);
+      this.winAlertAudio.preload = "auto";
     }
   }
 
   async enable(): Promise<boolean> {
     try {
       await Promise.all(
-        [this.winAudio, this.spinAudio].map(async (audio) => {
+        [this.winAudio, this.spinAudio, this.winAlertAudio].map(async (audio) => {
           if (!audio) return;
           await audio.play();
           audio.pause();
@@ -47,6 +51,7 @@ export class SoundEffects {
   dispose() {
     this.winAudio = null;
     this.spinAudio = null;
+    this.winAlertAudio = null;
   }
 
   private async playFallbackSpin() {
@@ -56,6 +61,17 @@ export class SoundEffects {
       await this.spinAudio.play();
     } catch {
       // Ignore fallback failure
+    }
+  }
+
+  async playWinAlert(): Promise<void> {
+    // 全リール停止後に呼び出されるため、ここでは純粋に効果音の再生だけを担当する。
+    if (!this.winAlertAudio) return;
+    try {
+      this.winAlertAudio.currentTime = 0;
+      await this.winAlertAudio.play();
+    } catch {
+      // Ignore alert failure
     }
   }
 }

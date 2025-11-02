@@ -40,7 +40,7 @@ export default function App() {
   }, [slotManager]);
 
   useEffect(() => {
-    const effects = new SoundEffects("/win.mp3", "/spinStart.mp3");
+    const effects = new SoundEffects("/win.mp3", "/spinStart.mp3", "/winAlert.mp3");
     soundEffectsRef.current = effects;
     return () => {
       effects.dispose();
@@ -90,7 +90,13 @@ export default function App() {
         }
 
         const totalMs = plan.totalSpinMs;
-        finishTimerRef.current = window.setTimeout(() => undefined, totalMs + 80);
+        finishTimerRef.current = window.setTimeout(() => {
+          // 全リール停止後に勝利判定を確認し、0.3 秒遅らせて確定音を鳴らす。
+          if (!plan.isWin) return;
+          const effects = soundEffectsRef.current;
+          if (!effects) return;
+          void effects.playWinAlert();
+        }, totalMs);
       }, plan.delayMs);
     },
     [slotManager],
