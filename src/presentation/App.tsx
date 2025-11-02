@@ -70,7 +70,7 @@ export default function App() {
       "/win.mp3",
       "/spinStart.mp3",
       "/winAlert.mp3",
-      "/reach.mp3",
+      "/reachStart.mp3",
     );
     soundEffectsRef.current = effects;
     return () => {

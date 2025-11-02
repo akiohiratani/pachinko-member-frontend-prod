@@ -110,44 +110,79 @@ export function SlotMachine({
     justifyContent: "center",
     transition: "max-width 0.3s ease",
   };
+  const machineClassName = spinning
+    ? "slot-machine-inner slot-machine-inner--spinning"
+    : "slot-machine-inner";
+  const wrapperClassName = spinning
+    ? "slot-machine-wrapper slot-machine-wrapper--spinning"
+    : "slot-machine-wrapper";
+
+  const stageBaseClass = "slot-machine-reel-stage";
 
   return (
-    <div className="slot-machine" style={machineStyle}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${reelCount}, ${reelWidth}px)`,
-          gap,
-        }}
-      >
-        {Array.from({ length: reelCount }).map((_, reelIndex) => {
-          // STOP_ORDER に存在するインデックスをもとに、個々のリールが何番目に停止するかを判断する。
-          const orderPosition = STOP_ORDER.indexOf(reelIndex);
-          // STOP_ORDER に含まれていない場合（将来リール数が変化したときのフォールバック）は従来通りの順番を採用する。
-          const sequentialPosition = orderPosition >= 0 ? orderPosition : reelIndex;
-          // 最終リールはリーチ演出分だけ停止を遅らせる。リーチでない場合は 0ms が加算される。
-          const reachDelay =
-            orderPosition === STOP_ORDER.length - 1 ? reachExtraDelayMs : 0;
-          const spinMs = baseSpinMs + reelDelayMs * sequentialPosition + reachDelay;
+    <div className={wrapperClassName}>
+      {spinning && (
+        <div className="slot-machine-spin-overlay" aria-hidden="true">
+          <div className="slot-machine-spin-overlay__pulse" />
+          <div className="slot-machine-spin-overlay__aura" />
+          <div className="slot-machine-spin-overlay__sweep" />
+        </div>
+      )}
+      <div className={machineClassName} style={machineStyle}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${reelCount}, ${reelWidth}px)`,
+            gap,
+          }}
+        >
+          {Array.from({ length: reelCount }).map((_, reelIndex) => {
+            // STOP_ORDER に存在するインデックスをもとに、個々のリールが何番目に停止するかを判断する。
+            const orderPosition = STOP_ORDER.indexOf(reelIndex);
+            // STOP_ORDER に含まれていない場合（将来リール数が変化したときのフォールバック）は従来通りの順番を採用する。
+            const sequentialPosition = orderPosition >= 0 ? orderPosition : reelIndex;
+            // 最終リールはリーチ演出分だけ停止を遅らせる。リーチでない場合は 0ms が加算される。
+            const reachDelay =
+              orderPosition === STOP_ORDER.length - 1 ? reachExtraDelayMs : 0;
+            const spinMs =
+              baseSpinMs + reelDelayMs * sequentialPosition + reachDelay;
 
-          return (
-            <SlotReel
-              key={reelIndex}
-              itemHeight={itemHeight}
-              reelWidth={reelWidth}
-              cycles={cyclesPattern[reelIndex % cyclesPattern.length]}
-              targetIndex={targetIndexes[reelIndex] ?? 0}
-              initialIndex={initialIndexes[reelIndex] ?? 0}
-              spinMs={spinMs}
-              easing={easing}
-              spinning={spinning}
-              symbols={symbols}
-              highlightColor={
-                spinning && highlightMode === "reach" ? reachBlinkColor : null
-              }
-            />
-          );
-        })}
+            const stageClassName = [
+              stageBaseClass,
+              spinning && `${stageBaseClass}--spinning`,
+              spinning &&
+                `${stageBaseClass}--variant-${(reelIndex % 3) + 1}`,
+            ]
+              .filter(Boolean)
+              .join(" ");
+
+            return (
+              <div
+                key={reelIndex}
+                className={stageClassName}
+                style={{
+                  width: reelWidth,
+                  animationDelay: spinning ? `${reelIndex * -0.18}s` : undefined,
+                }}
+              >
+                <SlotReel
+                  itemHeight={itemHeight}
+                  reelWidth={reelWidth}
+                  cycles={cyclesPattern[reelIndex % cyclesPattern.length]}
+                  targetIndex={targetIndexes[reelIndex] ?? 0}
+                  initialIndex={initialIndexes[reelIndex] ?? 0}
+                  spinMs={spinMs}
+                  easing={easing}
+                  spinning={spinning}
+                  symbols={symbols}
+                  highlightColor={
+                    spinning && highlightMode === "reach" ? reachBlinkColor : null
+                  }
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
