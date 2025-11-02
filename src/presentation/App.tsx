@@ -18,6 +18,7 @@ export default function App() {
   const slotManager = useMemo(() => new SlotMachineManager(), []);
   const {
     isDesktop,
+    orientation,
     containerMax,
     gap,
     reelWidth,
@@ -25,16 +26,30 @@ export default function App() {
   } = useSlotLayout(slotManager.reelCount);
   const machineMaxWidth = useMemo(
     () =>
-      Math.min(
-        slotManager.reelCount * reelWidth + (slotManager.reelCount - 1) * gap,
-        containerMax,
-      ),
-    [slotManager.reelCount, reelWidth, gap, containerMax],
+      orientation === "horizontal"
+        ? Math.min(
+            slotManager.reelCount * reelWidth +
+              (slotManager.reelCount - 1) * gap,
+            containerMax,
+          )
+        : Math.min(reelWidth, containerMax),
+    [
+      orientation,
+      slotManager.reelCount,
+      reelWidth,
+      gap,
+      containerMax,
+    ],
   );
   const surfaceMaxWidth = useMemo(
     () =>
-      Math.min(Math.max(machineMaxWidth + 32, 320), isDesktop ? 960 : 720),
-    [machineMaxWidth, isDesktop],
+      orientation === "horizontal"
+        ? Math.min(
+            Math.max(machineMaxWidth + 72, 360),
+            isDesktop ? 1080 : 800,
+          )
+        : Math.min(Math.max(machineMaxWidth + 48, 320), 720),
+    [machineMaxWidth, isDesktop, orientation],
   );
   const appClassName = useMemo(
     () => `app ${isDesktop ? "app--desktop" : "app--mobile"}`,
@@ -183,6 +198,7 @@ export default function App() {
           symbols={SYMBOLS}
           highlightMode={highlightMode}
           onReachBlink={handleReachBlink}
+          orientation={orientation}
         />
       </div>
 

@@ -51,6 +51,10 @@ export function SlotReel({
   const initialOffset = -initialIndex * itemHeight;
   const restingOffset = hasStarted ? 0 : initialOffset;
 
+  const frameRadius = Math.max(16, Math.round(reelWidth * 0.12));
+  const framePadding = Math.max(10, Math.floor(itemHeight * 0.1));
+  const symbolScale = reelWidth >= 160 ? 0.88 : 0.84;
+
   const trackStyle: React.CSSProperties = {
     transitionProperty: "transform",
     transitionDuration: spinning ? `${spinMs}ms` : "0ms",
@@ -66,12 +70,12 @@ export function SlotReel({
         height: itemHeight,
         overflow: "hidden",
         background: "#ffffff",
-        borderRadius: 12,
+        borderRadius: frameRadius,
         outline: "1px solid #e5e7eb",
         position: "relative",
         boxShadow: highlightColor
-          ? `0 20px 40px rgba(15,23,42,0.25), 0 0 0 4px ${highlightColor}`
-          : "0 20px 40px rgba(15,23,42,0.18)",
+          ? `0 24px 60px rgba(15,23,42,0.28), 0 0 0 5px ${highlightColor}`
+          : "0 24px 60px rgba(15,23,42,0.2)",
         transition: "box-shadow 0.3s ease",
       }}
     >
@@ -86,18 +90,18 @@ export function SlotReel({
               justifyContent: "center",
               background: index % symbolCount === 0 ? "#fafafa" : "#ffffff",
               boxSizing: "border-box",
-              borderBottom: "1px solid #f0f2f5",
-              padding: Math.max(8, Math.floor(itemHeight * 0.08)),
+              borderBottom: "1px solid rgba(226, 232, 240, 0.72)",
+              padding: framePadding,
             }}
           >
             <img
               src={symbol.src}
               alt={symbol.alt}
               style={{
-                width: "78%",
-                height: "78%",
+                width: `${Math.round(symbolScale * 100)}%`,
+                height: `${Math.round(symbolScale * 100)}%`,
                 objectFit: "contain",
-                filter: "drop-shadow(0 2px 3px rgba(15,23,42,0.10))",
+                filter: "drop-shadow(0 4px 6px rgba(15,23,42,0.12))",
                 userSelect: "none",
                 pointerEvents: "none",
               }}
