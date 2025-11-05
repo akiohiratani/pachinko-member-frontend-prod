@@ -49,19 +49,19 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-  participant SlotWebSocketGateway as WebSocketGateway
-  participant SlotRoundController as RoundController
-  participant SlotMachineManager as SlotManager
-  participant SlotMachine as UI コンポーネント
-  participant SoundEffects
+  participant WebSocketGateway as WebSocket 受信口
+  participant RoundOrchestrator as 演出制御ロジック
+  participant PresentationPlanner as 演出計画生成
+  participant SlotInterface as スロット UI
+  participant AudioPlayer as 効果音再生
 
-  SlotWebSocketGateway->>RoundController: roundStart メッセージ
-  RoundController->>SlotManager: planRound(payload)
-  SlotManager-->>RoundController: 演出計画 (停止位置/演出時間/効果音)
-  RoundController->>SoundEffects: playStart() で開始音を再生
-  RoundController->>SlotMachine: onPrepare / onSpin で UI 状態を更新
-  RoundController->>SlotMachine: onReachStart / onReachEnd (必要時)
-  RoundController->>SoundEffects: playWinAlert() (勝利時)
-  SoundEffects-->>RoundController: 再生完了
-  SlotMachine-->>RoundController: UI が勝利演出を表示
+  WebSocketGateway->>RoundOrchestrator: ラウンド開始イベントを受信
+  RoundOrchestrator->>PresentationPlanner: 受信内容を基に演出方針を作成
+  PresentationPlanner-->>RoundOrchestrator: リール停止順・演出タイミング・効果音の指示
+  RoundOrchestrator->>AudioPlayer: 開始演出用のサウンドを再生するよう依頼
+  RoundOrchestrator->>SlotInterface: 準備状態への遷移や回転開始などの UI 更新を指示
+  RoundOrchestrator->>SlotInterface: リーチ演出が必要なら追加演出を指示
+  RoundOrchestrator->>AudioPlayer: 勝利時は勝利演出サウンドを再生するよう依頼
+  AudioPlayer-->>RoundOrchestrator: 効果音再生が完了したことを通知
+  SlotInterface-->>RoundOrchestrator: 勝利演出の表示完了を報告
 ```
