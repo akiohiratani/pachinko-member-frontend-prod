@@ -1,3 +1,7 @@
+/**
+ * Onboarding で利用するモーダルコンポーネント。
+ * Stateless な Props による制御で UI を描画する。
+ */
 type WelcomeModalProps = {
   onTap: () => void;
 };

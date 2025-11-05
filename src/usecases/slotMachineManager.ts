@@ -24,6 +24,7 @@ export type RoundPlan = {
 
 /**
  * ドメイン設定とインフラを束ね、1 ラウンド分のスロット挙動を計画するユースケース。
+ * Application Service（サービスオブジェクト）として Round 計画を生成し、
  * 当たり判定、停止位置、演出時間、効果音などを一括で決定します。
  */
 export class SlotMachineManager {

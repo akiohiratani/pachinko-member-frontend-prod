@@ -1,3 +1,7 @@
+/**
+ * Presentation 層のコンテナコンポーネント。
+ * Clean Architecture の Presenter として、UI 状態とユースケース・インフラ層の橋渡しを行う。
+ */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SLOT_MACHINE_CONFIG } from "../domain/slotMachine";
 import { SYMBOLS } from "../domain/symbols";
@@ -11,6 +15,7 @@ import { WelcomeModal } from "./components/WelcomeModal";
 import { useSlotLayout } from "./hooks/useSlotLayout";
 import "./App.css";
 
+// Gatekeeper として WebSocket エンドポイントを単一場所で宣言しておく。
 const DEFAULT_WEBSOCKET_URL =
   "wss://12fk8ea9sb.execute-api.ap-northeast-1.amazonaws.com/Prod?role=member";
 
@@ -23,6 +28,7 @@ export default function App() {
     reelWidth,
     itemHeight,
   } = useSlotLayout(slotManager.reelCount);
+  // Responsive Layout Calculation: レイアウト Hook から受け取った値をもとに寸法を決定する。
   const machineMaxWidth = useMemo(
     () =>
       Math.min(
@@ -41,6 +47,7 @@ export default function App() {
     [isDesktop],
   );
 
+  // ViewModel 的な状態群。React Hooks で UI の状態を集約する。
   const [spinning, setSpinning] = useState(false);
   const [targetIndexes, setTargetIndexes] = useState<number[]>(() =>
     Array(slotManager.reelCount).fill(0),

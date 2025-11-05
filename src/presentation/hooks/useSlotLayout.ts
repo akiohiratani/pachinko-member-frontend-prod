@@ -1,3 +1,7 @@
+/**
+ * SlotMachine のレイアウト寸法を計算するためのカスタムフック。
+ * Presentation 層における Calculated Property（ViewModel）の責務を切り出す。
+ */
 import { useEffect, useState } from "react";
 
 export function useSlotLayout(reelCount: number) {

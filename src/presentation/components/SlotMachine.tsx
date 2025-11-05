@@ -1,3 +1,7 @@
+/**
+ * SlotMachine コンポーネントは Presentational Component。
+ * SlotRoundController から受け取る状態を描画する View 層として振る舞う。
+ */
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import type { SymbolDef } from "../../domain/symbols";
@@ -21,6 +25,7 @@ type SlotMachineProps = {
   onReachBlink?: () => void;
 };
 
+// アニメーションパターン。Decorator 的にリールへ変化を加えるための定義。
 const cyclesPattern = [8, 9, 10];
 // リールが停止する順番を「左 → 右 → 真ん中」となるように定義する。
 const STOP_ORDER = [0, 2, 1];

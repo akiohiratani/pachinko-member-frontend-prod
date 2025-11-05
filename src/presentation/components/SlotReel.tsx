@@ -1,3 +1,7 @@
+/**
+ * 個別のリール描画を担う Pure Component。
+ * SlotMachine から委譲される Props のみで描画が決定する。
+ */
 import React from "react";
 import type { SymbolDef } from "../../domain/symbols";
 

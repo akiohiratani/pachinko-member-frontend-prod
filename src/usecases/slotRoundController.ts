@@ -72,6 +72,7 @@ export type RoundLifecycleCallbacks = {
 
 /**
  * スロットの 1 ラウンド分の制御をまとめ、App.tsx から非同期処理を切り離すユースケース。
+ * Presentation 層とインフラを仲介する Mediator/Coordinator の役割を担う。
  * タイマーとアニメーションのスケジューリング、演出開始タイミング、効果音の再生を担う。
  */
 export class SlotRoundController {

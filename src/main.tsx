@@ -1,3 +1,7 @@
+/**
+ * React アプリのエントリーポイント。
+ * Layered Architecture の Composition Root として `App` をマウントする。
+ */
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
