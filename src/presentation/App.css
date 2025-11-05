@@ -1,3 +1,7 @@
+/*
+ * Presentation 層のルートスタイル。
+ * Glassmorphism をベースに UI の背景演出をまとめる。
+ */
 .app {
   width: 100%;
   min-height: 100svh;

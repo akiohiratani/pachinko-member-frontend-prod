@@ -1,3 +1,6 @@
+/*
+ * グローバルスタイル。Design Token 的な役割で基礎となるフォントや背景を定義する。
+ */
 :root {
   font-family: "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.6;

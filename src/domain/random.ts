@@ -1,3 +1,7 @@
+/**
+ * Strategy パターンで乱数生成ロジックを差し替え可能にするためのインターフェース。
+ * ドメイン層からインフラ依存を切り離し、テスト容易性と再利用性を高める。
+ */
 export interface RandomGenerator {
   float(): number;
 }

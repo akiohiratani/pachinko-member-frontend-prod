@@ -1,3 +1,6 @@
+/*
+ * SlotMachine の演出用スタイル。Animation パターンを集中管理するスタイルシート。
+ */
 @keyframes slot-machine-reach-blink {
   0% {
     opacity: 0;

@@ -13,6 +13,7 @@ type RawMessage = {
 
 /**
  * スロット演出用の WebSocket 接続を抽象化するゲートウェイクラス。
+ * アプリ全体からは Pub/Sub（Observer）パターンの Publisher として利用されます。
  * roundStart メッセージだけを抽出してコールバックへ引き渡します。
  */
 export class SlotWebSocketGateway {

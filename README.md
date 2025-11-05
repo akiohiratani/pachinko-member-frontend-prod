@@ -23,3 +23,45 @@ npm run dev
 ```
 
 `.env` に `VITE_WEBSOCKET_URL` を設定すると、既定 URL の代わりにそのエンドポイントへ接続します。
+
+## 実行時シーケンス
+
+### ① Welcome モーダルダイアログを閉じた後の処理
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant WelcomeModal
+  participant App
+  participant SoundEffects
+  participant SlotWebSocketGateway as WebSocketGateway
+
+  User->>WelcomeModal: タップして閉じる
+  WelcomeModal->>App: onTap コールバック
+  App->>SoundEffects: enable() で効果音を解放
+  SoundEffects-->>App: 再生許可結果
+  App->>SlotWebSocketGateway: connect() で WebSocket 接続開始
+  SlotWebSocketGateway-->>App: roundStart 受信用のリスナーを登録
+  App->>WelcomeModal: モーダルを非表示にする
+```
+
+### ② WebSocket を受信してスロットが回る処理
+
+```mermaid
+sequenceDiagram
+  participant SlotWebSocketGateway as WebSocketGateway
+  participant SlotRoundController as RoundController
+  participant SlotMachineManager as SlotManager
+  participant SlotMachine as UI コンポーネント
+  participant SoundEffects
+
+  SlotWebSocketGateway->>RoundController: roundStart メッセージ
+  RoundController->>SlotManager: planRound(payload)
+  SlotManager-->>RoundController: 演出計画 (停止位置/演出時間/効果音)
+  RoundController->>SoundEffects: playStart() で開始音を再生
+  RoundController->>SlotMachine: onPrepare / onSpin で UI 状態を更新
+  RoundController->>SlotMachine: onReachStart / onReachEnd (必要時)
+  RoundController->>SoundEffects: playWinAlert() (勝利時)
+  SoundEffects-->>RoundController: 再生完了
+  SlotMachine-->>RoundController: UI が勝利演出を表示
+```

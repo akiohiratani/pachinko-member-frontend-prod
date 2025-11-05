@@ -1,3 +1,7 @@
+/**
+ * SlotMachine ドメインの静的設定値。
+ * Configuration Object パターンでアプリ全体から共有し、数値変更を単一点に集約する。
+ */
 export const SLOT_MACHINE_CONFIG = {
   reelCount: 3,
   baseSpinMs: 2400,
