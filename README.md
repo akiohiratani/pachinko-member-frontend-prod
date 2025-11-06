@@ -31,10 +31,10 @@ npm run dev
 ```mermaid
 sequenceDiagram
   actor User
-  participant WelcomeModal
-  participant App
-  participant SoundEffects
-  participant SlotWebSocketGateway as WebSocketGateway
+  participant WelcomeModal as モーダルUI (WelcomeModal)
+  participant App as プレゼンター (App)
+  participant SoundEffects as 効果音ファサード (SoundEffects)
+  participant SlotWebSocketGateway as 通信ゲートウェイ (SlotWebSocketGateway)
 
   User->>WelcomeModal: タップして閉じる
   WelcomeModal->>App: onTap コールバック
@@ -49,19 +49,19 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-  participant WebSocketGateway as WebSocket 受信口
-  participant RoundOrchestrator as 演出制御ロジック
-  participant PresentationPlanner as 演出計画生成
-  participant SlotInterface as スロット UI
-  participant AudioPlayer as 効果音再生
+  participant SlotWebSocketGateway as 通信ゲートウェイ (SlotWebSocketGateway)
+  participant SlotRoundController as 演出制御ロジック (SlotRoundController)
+  participant SlotMachineManager as 演出計画生成 (SlotMachineManager)
+  participant SlotMachine as スロット UI (SlotMachine)
+  participant SoundEffects as 効果音ファサード (SoundEffects)
 
-  WebSocketGateway->>RoundOrchestrator: ラウンド開始イベントを受信
-  RoundOrchestrator->>PresentationPlanner: 受信内容を基に演出方針を作成
-  PresentationPlanner-->>RoundOrchestrator: リール停止順・演出タイミング・効果音の指示
-  RoundOrchestrator->>AudioPlayer: 開始演出用のサウンドを再生するよう依頼
-  RoundOrchestrator->>SlotInterface: 準備状態への遷移や回転開始などの UI 更新を指示
-  RoundOrchestrator->>SlotInterface: リーチ演出が必要なら追加演出を指示
-  RoundOrchestrator->>AudioPlayer: 勝利時は勝利演出サウンドを再生するよう依頼
-  AudioPlayer-->>RoundOrchestrator: 効果音再生が完了したことを通知
-  SlotInterface-->>RoundOrchestrator: 勝利演出の表示完了を報告
+  SlotWebSocketGateway->>SlotRoundController: roundStart イベントを受信
+  SlotRoundController->>SlotMachineManager: planRound() で演出計画を生成
+  SlotMachineManager-->>SlotRoundController: 停止順・演出タイミング・効果音種別
+  SlotRoundController->>SoundEffects: playStart() で開始演出サウンドを再生
+  SlotRoundController->>SlotMachine: onPrepare/onSpin で UI 更新を指示
+  SlotRoundController->>SlotMachine: onReachStart/onReachEnd でリーチ演出を制御
+  SlotRoundController->>SoundEffects: playWinAlert()/playReachPulse() を指示
+  SoundEffects-->>SlotRoundController: 効果音再生完了（必要に応じて）
+  SlotMachine-->>SlotRoundController: 勝利演出完了（onWin コールバック）
 ```
