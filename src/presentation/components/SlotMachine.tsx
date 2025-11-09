@@ -29,6 +29,11 @@ type SlotMachineProps = {
 const cyclesPattern = [8, 9, 10];
 // リールが停止する順番を「左 → 右 → 真ん中」となるように定義する。
 const STOP_ORDER = [0, 2, 1];
+const REACH_DIRECTION_IMAGES = [
+  "/direction/bike.png",
+  "/direction/jockey.png",
+  "/direction/car.png",
+];
 
 function createInitialIndexes(reelCount: number, symbols: readonly SymbolDef[]) {
   const symbolCount = symbols.length;
@@ -123,14 +128,25 @@ export function SlotMachine({
     : "slot-machine-wrapper";
 
   const stageBaseClass = "slot-machine-reel-stage";
+  const [reachDirection, setReachDirection] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!spinning || highlightMode !== "reach") {
+      setReachDirection(null);
+      return;
+    }
+    const pool = [...REACH_DIRECTION_IMAGES, null];
+    const index = Math.floor(Math.random() * pool.length);
+    setReachDirection(pool[index]);
+  }, [spinning, highlightMode]);
 
   return (
     <div className={wrapperClassName}>
       {/* リーチ演出中は専用の煽り演出を表示し、ユーザーの期待感を高める。 */}
-      {spinning && highlightMode === "reach" && (
+      {spinning && highlightMode === "reach" && reachDirection && (
         <div className="slot-machine-reach-direction" aria-hidden="true">
           <img
-            src="/direction/bike.png"
+            src={reachDirection}
             alt=""
             className="slot-machine-reach-direction__image"
           />
