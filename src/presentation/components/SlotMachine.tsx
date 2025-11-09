@@ -126,6 +126,16 @@ export function SlotMachine({
 
   return (
     <div className={wrapperClassName}>
+      {/* リーチ演出中は専用の煽り演出を表示し、ユーザーの期待感を高める。 */}
+      {spinning && highlightMode === "reach" && (
+        <div className="slot-machine-reach-direction" aria-hidden="true">
+          <img
+            src="/direction/bike.png"
+            alt=""
+            className="slot-machine-reach-direction__image"
+          />
+        </div>
+      )}
       {spinning && (
         <div className="slot-machine-spin-overlay" aria-hidden="true">
           <div className="slot-machine-spin-overlay__pulse" />

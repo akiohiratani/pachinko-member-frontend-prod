@@ -25,6 +25,22 @@
   }
 }
 
+/* リーチ演出で使用する煽り画像をズームしながら点滅させるアニメーション。 */
+@keyframes slot-machine-reach-direction-zoom {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3) rotate(-4deg);
+    opacity: 0.0;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.5) rotate(4deg);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.9) rotate(-4deg);
+    opacity: 0.0;
+  }
+}
+
 .slot-machine-win-overlay {
   position: fixed;
   inset: 0;
@@ -163,6 +179,27 @@
   );
   mix-blend-mode: screen;
   animation: slot-machine-spin-sweep 3.6s linear infinite;
+}
+
+.slot-machine-reach-direction {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.slot-machine-reach-direction__image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(60vw, 520px);
+  max-width: 90%;
+  height: auto;
+  filter: drop-shadow(0 25px 60px rgba(15, 23, 42, 0.55));
+  animation: slot-machine-reach-direction-zoom 1.2s ease-in-out infinite;
 }
 
 .slot-machine-reel-stage {
