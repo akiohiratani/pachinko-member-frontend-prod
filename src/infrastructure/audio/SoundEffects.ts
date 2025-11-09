@@ -26,6 +26,7 @@ export class SoundEffects {
       // リーチ演出用のサウンドも事前に生成し、点滅と同期させる際の再生遅延を抑える。
       this.reachAudio = new Audio(reachSrc);
       this.reachAudio.preload = "auto";
+      this.reachAudio.loop = true;
     }
   }
 
@@ -94,6 +95,11 @@ export class SoundEffects {
   async playReachPulse(): Promise<void> {
     // リールの点滅タイミングと同期させるため、再生位置を巻き戻して毎回短い効果音を鳴らす。
     if (!this.reachAudio) return;
+    // モバイルブラウザでは再生中に currentTime を巻き戻すと音が途切れるため、
+    // 一度再生を開始したらループ再生に任せる。
+    if (!this.reachAudio.paused) {
+      return;
+    }
     try {
       this.reachAudio.currentTime = 0;
       await this.reachAudio.play();
