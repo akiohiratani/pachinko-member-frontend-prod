@@ -90,6 +90,33 @@
   z-index: 5;
 }
 
+.slot-machine-reach-direction {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 6;
+  overflow: hidden;
+}
+
+@keyframes slot-machine-reach-direction-flow {
+  0% {
+    transform: translateX(110%);
+  }
+  100% {
+    transform: translateX(-110%);
+  }
+}
+
+.slot-machine-reach-direction__icon {
+  width: min(22vw, 240px);
+  max-width: 60%;
+  animation: slot-machine-reach-direction-flow 3s linear infinite;
+  filter: drop-shadow(0 12px 18px rgba(15, 23, 42, 0.4));
+}
+
 .slot-machine-wrapper--spinning {
   perspective: 1800px;
 }

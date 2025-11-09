@@ -126,6 +126,15 @@ export function SlotMachine({
 
   return (
     <div className={wrapperClassName}>
+      {highlightMode === "reach" && (
+        <div className="slot-machine-reach-direction" aria-hidden="true">
+          <img
+            className="slot-machine-reach-direction__icon"
+            src="/direction/bike.png"
+            alt=""
+          />
+        </div>
+      )}
       {spinning && (
         <div className="slot-machine-spin-overlay" aria-hidden="true">
           <div className="slot-machine-spin-overlay__pulse" />
