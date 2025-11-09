@@ -192,8 +192,6 @@ export default function App() {
           onReachBlink={handleReachBlink}
         />
       </div>
-
-      {highlightMode === "win" && <div className="slot-machine-win-overlay" />}
       {showWelcome && <WelcomeModal onTap={handleWelcomeTap} />}
     </div>
   );

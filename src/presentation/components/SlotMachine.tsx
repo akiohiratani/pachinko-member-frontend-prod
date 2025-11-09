@@ -107,6 +107,11 @@ export function SlotMachine({
     return () => window.clearInterval(timer);
   }, [spinning, highlightMode, onReachBlink]);
 
+  const reachDirectionIconSrc = useMemo(() => {
+    const baseUrl = (import.meta.env.BASE_URL ?? "/").replace(/\/?$/, "/");
+    return `${baseUrl}direction/bike.png`;
+  }, []);
+
   const machineStyle: CSSProperties = {
     width: "100%",
     maxWidth: machineMaxWidth,
@@ -126,6 +131,19 @@ export function SlotMachine({
 
   return (
     <div className={wrapperClassName}>
+      {highlightMode === "reach" && (
+        <div className="slot-machine-reach-direction" aria-hidden="true">
+          <img
+            className="slot-machine-reach-direction__icon"
+            src={reachDirectionIconSrc}
+            alt=""
+            decoding="async"
+          />
+        </div>
+      )}
+      {highlightMode === "win" && (
+        <div className="slot-machine-win-overlay" aria-hidden="true" />
+      )}
       {spinning && (
         <div className="slot-machine-spin-overlay" aria-hidden="true">
           <div className="slot-machine-spin-overlay__pulse" />
