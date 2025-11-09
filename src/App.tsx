@@ -12,6 +12,14 @@ const SYMBOLS: readonly SymbolDef[] = [
   { src: "/symbols/4.png", alt: "ハーゲンダッツ バニラ" },
 ] as const;
 
+const DIRECTION_OPTIONS = [
+  null,
+  "/direction/bike.png",
+  "/direction/jockey.png",
+  "/direction/car.png",
+] as const;
+type DirectionAsset = (typeof DIRECTION_OPTIONS)[number];
+
 const REELS = 3 as const;
 
 /** アニメーション基準 */
@@ -29,6 +37,7 @@ function App() {
   const [targetIndexes, setTargetIndexes] = useState<number[]>(Array(REELS).fill(0));
   const [spinBaseMs, setSpinBaseMs] = useState(BASE_SPIN_MS);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [reachDirection, setReachDirection] = useState<DirectionAsset>(null);
 
   const socketRef = useRef<WebSocket | null>(null);
   const hasConnectedRef = useRef(false);
@@ -114,6 +123,7 @@ function App() {
 
   /** 受信開始（startAtで同時化） */
   const handleStart = (payload: WsPayload) => {
+    setReachDirection(null);
     const decideWin = randomFloat() < 0.2; // 20%
 
     let targets: number[];
@@ -141,7 +151,10 @@ function App() {
     if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
     if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
 
+    const selectedDirection = DIRECTION_OPTIONS[randInt(0, DIRECTION_OPTIONS.length - 1)];
+
     startTimerRef.current = window.setTimeout(async () => {
+      setReachDirection(selectedDirection);
       setSpinning(false);
       requestAnimationFrame(() => requestAnimationFrame(() => setSpinning(true)));
 
@@ -167,6 +180,7 @@ function App() {
 
       const totalMs = baseMsForThisRound + REEL_DELAY_MS * (REELS - 1);
       finishTimerRef.current = window.setTimeout(() => {
+        setReachDirection(null);
         /* 終了音なし（外れ音は要件で削除） */
       }, totalMs + 80);
     }, delay);
@@ -223,6 +237,7 @@ function App() {
         framePadding={framePadding}
         gap={gap}
         containerMax={containerMax}
+        reachDirection={reachDirection}
         isDesktop={isDesktop}
       />
 
@@ -301,6 +316,7 @@ function SlotMachine(props: {
   framePadding: number;
   gap: number;
   containerMax: number;
+  reachDirection: DirectionAsset;
   isDesktop: boolean;
 }) {
   const {
@@ -315,6 +331,8 @@ function SlotMachine(props: {
     framePadding,
     gap,
     containerMax,
+    reachDirection,
+    isDesktop,
   } = props;
 
   const cycles = [8, 9, 10];
@@ -330,8 +348,35 @@ function SlotMachine(props: {
         background: "#ffffff",
         boxShadow: "0 12px 28px rgba(15,23,42,0.10)",
         transform: "translateZ(0)",
+        position: "relative",
+        overflow: "visible",
       }}
     >
+      {spinning && reachDirection && (
+        <div
+          style={{
+            position: "absolute",
+            top: -Math.max(110, Math.round(itemHeight * 0.9)),
+            left: "50%",
+            transform: "translateX(-50%)",
+            pointerEvents: "none",
+          }}
+        >
+          <img
+            src={reachDirection}
+            alt="リーチ演出"
+            style={{
+              width: Math.min(isDesktop ? reelWidth * 1.5 : reelWidth * 1.3, 280),
+              maxWidth: "82vw",
+              height: "auto",
+              filter: "drop-shadow(0 14px 30px rgba(15,23,42,0.28))",
+              userSelect: "none",
+              pointerEvents: "none",
+            }}
+            draggable={false}
+          />
+        </div>
+      )}
       <div
         style={{
           display: "grid",
