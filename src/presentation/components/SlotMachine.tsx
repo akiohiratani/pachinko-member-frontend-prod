@@ -31,7 +31,11 @@ const cyclesPattern = [8, 9, 10];
 const STOP_ORDER = [0, 2, 1];
 const REACH_DIRECTION_IMAGES = [
   "/direction/bike.png",
+  "/direction/bike.png",
   "/direction/jockey.png",
+  "/direction/jockey.png",
+  "/direction/jockey.png",
+  "/direction/car.png",
   "/direction/car.png",
 ];
 
