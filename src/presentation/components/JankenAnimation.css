@@ -11,7 +11,7 @@
 
 .janken-animation__orb {
   position: relative;
-  width: min(32vw, 240px);
+  width: min(32vw, 120px);
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.24)),
