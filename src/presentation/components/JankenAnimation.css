@@ -2,15 +2,16 @@
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   pointer-events: none;
   z-index: 14;
+  padding-bottom: clamp(42px, 9vh, 120px);
 }
 
 .janken-animation__orb {
   position: relative;
-  width: min(42vw, 320px);
+  width: min(32vw, 240px);
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.24)),
@@ -24,7 +25,7 @@
 }
 
 .janken-animation__icon {
-  width: 62%;
+  width: 54%;
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 22px 30px rgba(15, 23, 42, 0.25));
