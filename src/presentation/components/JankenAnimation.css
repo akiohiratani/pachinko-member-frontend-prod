@@ -1,0 +1,128 @@
+.janken-animation {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 14;
+}
+
+.janken-animation__orb {
+  position: relative;
+  width: min(42vw, 320px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.24)),
+    linear-gradient(135deg, rgba(59, 130, 246, 0.65), rgba(236, 72, 153, 0.65), rgba(251, 191, 36, 0.65));
+  box-shadow: 0 25px 90px rgba(15, 23, 42, 0.35), 0 0 0 18px rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  animation: janken-bounce 1.6s ease-in-out infinite, janken-rotate 6s linear infinite;
+}
+
+.janken-animation__icon {
+  width: 62%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 22px 30px rgba(15, 23, 42, 0.25));
+  animation: janken-wobble 1.2s ease-in-out infinite;
+}
+
+.janken-animation__glow {
+  position: absolute;
+  inset: -14%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.32), rgba(59, 130, 246, 0.18), rgba(236, 72, 153, 0.08), transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0.95;
+  animation: janken-pulse 2s ease-in-out infinite;
+}
+
+.janken-animation__trail {
+  position: absolute;
+  inset: -12%;
+  background: conic-gradient(from 120deg, transparent 0deg, rgba(59, 130, 246, 0.35) 60deg, rgba(236, 72, 153, 0.35) 140deg, rgba(251, 191, 36, 0.35) 210deg, transparent 300deg);
+  filter: blur(26px);
+  animation: janken-sweep 2.8s linear infinite;
+}
+
+.janken-animation__spark {
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9), transparent 55%);
+  mix-blend-mode: screen;
+  opacity: 0.8;
+  animation: janken-flicker 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes janken-bounce {
+  0%,
+  100% {
+    transform: translateY(8px) scale(0.96);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.04);
+  }
+}
+
+@keyframes janken-rotate {
+  0% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+  100% {
+    transform: rotate(-3deg);
+  }
+}
+
+@keyframes janken-wobble {
+  0% {
+    transform: rotate(-6deg) scale(0.98);
+  }
+  50% {
+    transform: rotate(6deg) scale(1.04);
+  }
+  100% {
+    transform: rotate(-6deg) scale(0.98);
+  }
+}
+
+@keyframes janken-pulse {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.92);
+    opacity: 0.9;
+  }
+}
+
+@keyframes janken-sweep {
+  0% {
+    transform: rotate(0deg) scale(1.04);
+  }
+  100% {
+    transform: rotate(360deg) scale(1.04);
+  }
+}
+
+@keyframes janken-flicker {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
