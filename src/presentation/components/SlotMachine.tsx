@@ -124,6 +124,12 @@ export function SlotMachine({
     justifyContent: "center",
     transition: "max-width 0.3s ease",
   };
+  // スマートフォン幅では左右のリールがはみ出しやすいため、中央へ少し重ねる。
+  const shouldOverlapSides = machineMaxWidth <= 420;
+  const sideOverlap = shouldOverlapSides
+    ? Math.min(Math.round(reelWidth * 0.1), 14)
+    : 0;
+  const sideMargin = sideOverlap > 0 ? -(gap + sideOverlap) : 0;
   const machineClassName = spinning
     ? "slot-machine-inner slot-machine-inner--spinning"
     : "slot-machine-inner";
@@ -198,6 +204,12 @@ export function SlotMachine({
                 style={{
                   width: reelWidth,
                   animationDelay: spinning ? `${reelIndex * -0.18}s` : undefined,
+                  marginRight:
+                    reelIndex === 0 && sideOverlap > 0 ? sideMargin : undefined,
+                  marginLeft:
+                    reelIndex === reelCount - 1 && sideOverlap > 0
+                      ? sideMargin
+                      : undefined,
                 }}
               >
                 <SlotReel
