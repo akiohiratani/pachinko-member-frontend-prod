@@ -63,9 +63,28 @@ export default function App() {
   const websocketRef = useRef<SlotWebSocketGateway | null>(null);
   const roundControllerRef = useRef<SlotRoundController | null>(null);
 
+  const roomId = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("roomId") ?? "";
+  }, []);
+
   const websocketUrl = useMemo(
-    () => import.meta.env.VITE_WEBSOCKET_URL ?? DEFAULT_WEBSOCKET_URL,
-    [],
+    () => {
+      const baseUrl = import.meta.env.VITE_WEBSOCKET_URL ?? DEFAULT_WEBSOCKET_URL;
+      if (!roomId) {
+        return baseUrl;
+      }
+
+      try {
+        const url = new URL(baseUrl);
+        url.searchParams.set("roomId", roomId);
+        return url.toString();
+      } catch {
+        const separator = baseUrl.includes("?") ? "&" : "?";
+        return `${baseUrl}${separator}roomId=${encodeURIComponent(roomId)}`;
+      }
+    },
+    [roomId],
   );
 
   useEffect(() => {
