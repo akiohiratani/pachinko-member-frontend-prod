@@ -5,6 +5,8 @@ import type { RandomGenerator } from "../domain/random";
 
 export type RoundStartPayload = {
   startAt?: string;
+  winProbability?: number;
+  winIndex?: number;
   [key: string]: unknown;
 };
 
@@ -35,7 +37,9 @@ export class SlotMachineManager {
   }
 
   planRound(payload: RoundStartPayload, now = Date.now()): RoundPlan {
-    const isWin = this.random.float() < SLOT_MACHINE_CONFIG.winProbability;
+    const winProbability = this.resolveWinProbability(payload);
+    SLOT_MACHINE_CONFIG.winProbability = winProbability;
+    const isWin = this.random.float() < winProbability;
     const targetIndexes = this.decideTargets(isWin);
     // 左右のリールが揃っていて中央のみが異なる場合をリーチとみなす。
     const isReach =
@@ -90,6 +94,16 @@ export class SlotMachineManager {
       const img = new Image();
       img.src = symbol.src;
     });
+  }
+
+  private resolveWinProbability(payload: RoundStartPayload): number {
+    const rawProbability = payload.winProbability ?? payload.winIndex;
+    if (typeof rawProbability === "number" && Number.isFinite(rawProbability)) {
+      const normalized = rawProbability / 100;
+      return Math.min(Math.max(normalized, 0), 1);
+    }
+
+    return SLOT_MACHINE_CONFIG.winProbability;
   }
 
   private calculateDelay(startAt: string | undefined, now: number): number {
