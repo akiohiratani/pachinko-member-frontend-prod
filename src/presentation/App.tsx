@@ -42,12 +42,14 @@ export default function App() {
     onReconnect,
   } = useSlotGame(slotManager, websocketUrl);
 
+  const safeSpinning = animationsEnabled ? spinning : false;
+
   return (
     <div className={appClassName}>
       <SlotMachineSurface
         layout={layout}
         slotManager={slotManager}
-        spinning={spinning}
+        spinning={safeSpinning}
         targetIndexes={targetIndexes}
         spinBaseMs={spinBaseMs}
         reachExtraDelayMs={reachExtraDelayMs}
