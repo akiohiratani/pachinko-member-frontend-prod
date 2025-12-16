@@ -3,10 +3,9 @@
  * Clean Architecture の Presenter として、UI 状態とユースケース・インフラ層の橋渡しを行う。
  */
 import { useMemo } from "react";
-import { SYMBOLS } from "../domain/symbols";
 import { SlotMachineManager } from "../usecases/slotMachineManager";
 import { ConnectionErrorDialog } from "./components/ConnectionErrorDialog";
-import { SlotMachine } from "./components/SlotMachine";
+import { SlotMachineSurface } from "./components/SlotMachineSurface";
 import { WelcomeModal } from "./components/WelcomeModal";
 import { useSlotLayout } from "./hooks/useSlotLayout";
 import { useSlotGame } from "./hooks/useSlotGame";
@@ -18,29 +17,10 @@ const DEFAULT_WEBSOCKET_URL =
 
 export default function App() {
   const slotManager = useMemo(() => new SlotMachineManager(), []);
-  const {
-    isDesktop,
-    containerMax,
-    gap,
-    reelWidth,
-    itemHeight,
-  } = useSlotLayout(slotManager.reelCount);
-
-  const machineMaxWidth = useMemo(
-    () =>
-      Math.min(
-        slotManager.reelCount * reelWidth + (slotManager.reelCount - 1) * gap,
-        containerMax,
-      ),
-    [slotManager.reelCount, reelWidth, gap, containerMax],
-  );
-  const surfaceMaxWidth = useMemo(
-    () => Math.min(Math.max(machineMaxWidth + 32, 320), isDesktop ? 960 : 720),
-    [machineMaxWidth, isDesktop],
-  );
+  const layout = useSlotLayout(slotManager.reelCount);
   const appClassName = useMemo(
-    () => `app ${isDesktop ? "app--desktop" : "app--mobile"}`,
-    [isDesktop],
+    () => `app ${layout.isDesktop ? "app--desktop" : "app--mobile"}`,
+    [layout.isDesktop],
   );
 
   const roomId = useMemo(() => {
@@ -82,29 +62,16 @@ export default function App() {
 
   return (
     <div className={appClassName}>
-      <div
-        className="app__surface"
-        style={{
-          maxWidth: `${Math.round(surfaceMaxWidth)}px`,
-        }}
-      >
-        <SlotMachine
-          spinning={spinning}
-          targetIndexes={targetIndexes}
-          reelCount={slotManager.reelCount}
-          baseSpinMs={spinBaseMs}
-          reelDelayMs={slotManager.reelDelayMs}
-          easing={slotManager.easing}
-          reachExtraDelayMs={reachExtraDelayMs}
-          reelWidth={reelWidth}
-          itemHeight={itemHeight}
-          gap={gap}
-          containerMax={containerMax}
-          symbols={SYMBOLS}
-          highlightMode={highlightMode}
-          onReachBlink={onReachBlink}
-        />
-      </div>
+      <SlotMachineSurface
+        layout={layout}
+        slotManager={slotManager}
+        spinning={spinning}
+        targetIndexes={targetIndexes}
+        spinBaseMs={spinBaseMs}
+        reachExtraDelayMs={reachExtraDelayMs}
+        highlightMode={highlightMode}
+        onReachBlink={onReachBlink}
+      />
 
       {highlightMode === "win" && (
         <>
