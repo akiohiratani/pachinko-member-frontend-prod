@@ -1,0 +1,189 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SLOT_MACHINE_CONFIG } from "../../domain/slotMachine";
+import { SoundEffects } from "../../infrastructure/audio/SoundEffects";
+import { SlotWebSocketGateway } from "../../infrastructure/slotWebSocketGateway";
+import { SlotMachineManager, type RoundStartPayload } from "../../usecases/slotMachineManager";
+import { SlotRoundController } from "../../usecases/slotRoundController";
+
+type HighlightMode = "none" | "reach" | "win";
+
+type SlotGameState = {
+  spinning: boolean;
+  targetIndexes: number[];
+  spinBaseMs: number;
+  reachExtraDelayMs: number;
+  highlightMode: HighlightMode;
+  showWelcome: boolean;
+  connectionError: string | null;
+};
+
+type SlotGameHandlers = {
+  onReachBlink(): void;
+  onWelcomeTap(): void;
+  onReconnect(): void;
+};
+
+type SlotGameHook = SlotGameState & SlotGameHandlers;
+
+export function useSlotGame(
+  slotManager: SlotMachineManager,
+  websocketUrl: string,
+): SlotGameHook {
+  const [spinning, setSpinning] = useState(false);
+  const [targetIndexes, setTargetIndexes] = useState<number[]>(() =>
+    Array(slotManager.reelCount).fill(0),
+  );
+  const [spinBaseMs, setSpinBaseMs] = useState<number>(SLOT_MACHINE_CONFIG.baseSpinMs);
+  const [reachExtraDelayMs, setReachExtraDelayMs] = useState<number>(0);
+  const [highlightMode, setHighlightMode] = useState<HighlightMode>("none");
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+
+  const soundEffectsRef = useRef<SoundEffects | null>(null);
+  const websocketRef = useRef<SlotWebSocketGateway | null>(null);
+  const roundControllerRef = useRef<SlotRoundController | null>(null);
+  const suppressCloseErrorRef = useRef(false);
+
+  useEffect(() => {
+    slotManager.preloadSymbols();
+  }, [slotManager]);
+
+  useEffect(() => {
+    const effects = new SoundEffects(
+      "/win.mp3",
+      "/spinStart.mp3",
+      "/winAlert.mp3",
+      "/reachmusic.mp3",
+    );
+    soundEffectsRef.current = effects;
+    return () => {
+      effects.dispose();
+      soundEffectsRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (highlightMode === "reach") {
+      return;
+    }
+    soundEffectsRef.current?.stopReachPulse();
+  }, [highlightMode]);
+
+  useEffect(() => {
+    roundControllerRef.current = new SlotRoundController(slotManager);
+    return () => {
+      roundControllerRef.current?.dispose();
+      roundControllerRef.current = null;
+      websocketRef.current?.disconnect();
+    };
+  }, [slotManager]);
+
+  const disconnectSilently = useCallback(() => {
+    suppressCloseErrorRef.current = true;
+    websocketRef.current?.disconnect();
+  }, []);
+
+  const handleRoundStart = useCallback(
+    (payload: RoundStartPayload) => {
+      const controller = roundControllerRef.current;
+      if (!controller) return;
+
+      controller.handleRoundStart(
+        payload,
+        {
+          onPrepare: (roundPlan) => {
+            setSpinBaseMs(roundPlan.baseSpinDurationMs);
+            setReachExtraDelayMs(roundPlan.reachExtraDelayMs);
+            setSpinning(false);
+            setHighlightMode("none");
+          },
+          onSpin: (indexes) => {
+            setTargetIndexes(indexes);
+            setSpinning(true);
+          },
+          onReachStart: () => {
+            setHighlightMode("reach");
+          },
+          onReachEnd: () => {
+            setHighlightMode("none");
+          },
+          onWin: () => {
+            setHighlightMode("win");
+            disconnectSilently();
+          },
+        },
+        soundEffectsRef.current,
+      );
+    },
+    [disconnectSilently],
+  );
+
+  const connectWebSocket = useCallback(() => {
+    setConnectionError(null);
+    suppressCloseErrorRef.current = false;
+    if (!websocketRef.current) {
+      websocketRef.current = new SlotWebSocketGateway(websocketUrl);
+    }
+    websocketRef.current.connect(handleRoundStart, {
+      onOpen: () => setConnectionError(null),
+      onError: () =>
+        setConnectionError(
+          "通信に失敗しました。接続状況を確認し、再接続してください。",
+        ),
+      onClose: () => {
+        if (suppressCloseErrorRef.current) {
+          suppressCloseErrorRef.current = false;
+          return;
+        }
+        setConnectionError("通信が切断されました。再接続してください。");
+      },
+    });
+  }, [websocketUrl, handleRoundStart]);
+
+  const enableSound = useCallback(async () => {
+    const effects = soundEffectsRef.current;
+    if (!effects) return false;
+    return effects.enable();
+  }, []);
+
+  const onReachBlink = useCallback(() => {
+    const effects = soundEffectsRef.current;
+    if (!effects) return;
+    void effects.playReachPulse();
+  }, []);
+
+  const onWelcomeTap = useCallback(async () => {
+    const ok = await enableSound();
+    if (ok) {
+      connectWebSocket();
+      setShowWelcome(false);
+    }
+  }, [enableSound, connectWebSocket]);
+
+  return useMemo(
+    () => ({
+      spinning,
+      targetIndexes,
+      spinBaseMs,
+      reachExtraDelayMs,
+      highlightMode,
+      showWelcome,
+      connectionError,
+      onReachBlink,
+      onWelcomeTap,
+      onReconnect: connectWebSocket,
+    }),
+    [
+      spinning,
+      targetIndexes,
+      spinBaseMs,
+      reachExtraDelayMs,
+      highlightMode,
+      showWelcome,
+      connectionError,
+      onReachBlink,
+      onWelcomeTap,
+      connectWebSocket,
+    ],
+  );
+}
