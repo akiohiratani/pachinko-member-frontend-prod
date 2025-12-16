@@ -17,7 +17,7 @@ import "./App.css";
 
 // Gatekeeper として WebSocket エンドポイントを単一場所で宣言しておく。
 const DEFAULT_WEBSOCKET_URL =
-  "wss://12fk8ea9sb.execute-api.ap-northeast-1.amazonaws.com/Prod?role=member";
+  "wss://0qfs0zhpg6.execute-api.ap-northeast-1.amazonaws.com/Akio1113?role=member";
 
 export default function App() {
   const slotManager = useMemo(() => new SlotMachineManager(), []);
