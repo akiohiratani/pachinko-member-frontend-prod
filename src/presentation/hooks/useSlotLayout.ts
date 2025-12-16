@@ -4,7 +4,15 @@
  */
 import { useEffect, useState } from "react";
 
-export function useSlotLayout(reelCount: number) {
+export type SlotLayout = {
+  isDesktop: boolean;
+  containerMax: number;
+  gap: number;
+  reelWidth: number;
+  itemHeight: number;
+};
+
+export function useSlotLayout(reelCount: number): SlotLayout {
   const [viewportWidth, setViewportWidth] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth : 375,
   );

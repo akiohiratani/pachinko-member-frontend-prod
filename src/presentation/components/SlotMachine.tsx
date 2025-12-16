@@ -23,6 +23,7 @@ type SlotMachineProps = {
   symbols: readonly SymbolDef[];
   highlightMode: "none" | "reach" | "win";
   onReachBlink?: () => void;
+  machineScale?: number;
 };
 
 // アニメーションパターン。Decorator 的にリールへ変化を加えるための定義。
@@ -78,6 +79,7 @@ export function SlotMachine({
   symbols,
   highlightMode,
   onReachBlink,
+  machineScale = 1,
 }: SlotMachineProps) {
   const outerWidth = reelCount * reelWidth + (reelCount - 1) * gap;
   const machineMaxWidth = Math.min(outerWidth, containerMax);
@@ -122,7 +124,9 @@ export function SlotMachine({
     display: "flex",
     justifyContent: "center",
     transition: "max-width 0.3s ease",
-  };
+    transformOrigin: "center",
+    "--slot-machine-scale": machineScale,
+  } as CSSProperties;
   const machineClassName = spinning
     ? "slot-machine-inner slot-machine-inner--spinning"
     : "slot-machine-inner";
