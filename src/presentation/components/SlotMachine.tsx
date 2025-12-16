@@ -24,6 +24,7 @@ type SlotMachineProps = {
   highlightMode: "none" | "reach" | "win";
   onReachBlink?: () => void;
   machineScale?: number;
+  animationsEnabled?: boolean;
 };
 
 // アニメーションパターン。Decorator 的にリールへ変化を加えるための定義。
@@ -80,6 +81,7 @@ export function SlotMachine({
   highlightMode,
   onReachBlink,
   machineScale = 1,
+  animationsEnabled = true,
 }: SlotMachineProps) {
   const outerWidth = reelCount * reelWidth + (reelCount - 1) * gap;
   const machineMaxWidth = Math.min(outerWidth, containerMax);
@@ -127,12 +129,20 @@ export function SlotMachine({
     transformOrigin: "center",
     "--slot-machine-scale": machineScale,
   } as CSSProperties;
-  const machineClassName = spinning
-    ? "slot-machine-inner slot-machine-inner--spinning"
-    : "slot-machine-inner";
-  const wrapperClassName = spinning
-    ? "slot-machine-wrapper slot-machine-wrapper--spinning"
-    : "slot-machine-wrapper";
+  const machineClassName = [
+    "slot-machine-inner",
+    spinning && "slot-machine-inner--spinning",
+    !animationsEnabled && "slot-machine-inner--static",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const wrapperClassName = [
+    "slot-machine-wrapper",
+    spinning && "slot-machine-wrapper--spinning",
+    !animationsEnabled && "slot-machine-wrapper--static",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const stageBaseClass = "slot-machine-reel-stage";
   const [reachDirection, setReachDirection] = useState<string | null>(null);
@@ -187,7 +197,7 @@ export function SlotMachine({
 
             const stageClassName = [
               stageBaseClass,
-              spinning && `${stageBaseClass}--spinning`,
+              spinning && animationsEnabled && `${stageBaseClass}--spinning`,
               spinning &&
                 `${stageBaseClass}--variant-${(reelIndex % 3) + 1}`,
             ]
