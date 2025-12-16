@@ -2,6 +2,12 @@ import type { RoundStartPayload } from "../usecases/slotMachineManager";
 
 type MessageHandler = (payload: RoundStartPayload) => void;
 
+type ConnectionCallbacks = {
+  onOpen?: () => void;
+  onError?: (event: Event) => void;
+  onClose?: (event: CloseEvent) => void;
+};
+
 type RawMessage = {
   action?: string;
   routeKey?: string;
@@ -26,7 +32,7 @@ export class SlotWebSocketGateway {
     this.url = url;
   }
 
-  connect(handler: MessageHandler) {
+  connect(handler: MessageHandler, callbacks?: ConnectionCallbacks) {
     this.messageHandler = handler;
     if (this.hasConnected) {
       return;
@@ -35,6 +41,22 @@ export class SlotWebSocketGateway {
     const ws = new WebSocket(this.url);
     this.socket = ws;
     this.hasConnected = true;
+
+    ws.addEventListener("open", () => {
+      callbacks?.onOpen?.();
+    });
+
+    ws.addEventListener("error", (event) => {
+      this.hasConnected = false;
+      callbacks?.onError?.(event);
+      ws.close();
+    });
+
+    ws.addEventListener("close", (event) => {
+      this.hasConnected = false;
+      this.socket = null;
+      callbacks?.onClose?.(event);
+    });
 
     ws.addEventListener("message", (event) => {
       if (!this.messageHandler) return;
