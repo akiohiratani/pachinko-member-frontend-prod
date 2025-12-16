@@ -110,6 +110,10 @@
   perspective: 1800px;
 }
 
+.slot-machine-wrapper--static .slot-machine-inner {
+  transition: none;
+}
+
 .slot-machine-inner {
   position: relative;
   z-index: 6;
@@ -119,6 +123,10 @@
   overflow: visible;
   transform: scale(var(--slot-machine-scale, 1));
   transform-origin: center;
+}
+
+.slot-machine-inner--static {
+  transition: none;
 }
 
 .slot-machine-inner--spinning {
@@ -222,6 +230,14 @@
   animation-direction: alternate;
   animation-fill-mode: both;
   will-change: transform;
+}
+
+.slot-machine-wrapper--static .slot-machine-reel-stage {
+  transition: none;
+}
+
+.slot-machine-wrapper--static .slot-machine-reel-stage--spinning {
+  animation: none;
 }
 
 @keyframes slot-machine-reel-bob-left {

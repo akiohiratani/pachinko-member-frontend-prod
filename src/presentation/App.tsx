@@ -9,15 +9,14 @@ import { SlotMachineSurface } from "./components/SlotMachineSurface";
 import { WelcomeModal } from "./components/WelcomeModal";
 import { useSlotLayout } from "./hooks/useSlotLayout";
 import { useSlotGame } from "./hooks/useSlotGame";
+import { useViewportMotionGuard } from "./hooks/useViewportMotionGuard";
+import { useWebsocketUrl } from "./hooks/useWebsocketUrl";
 import "./App.css";
-
-// Gatekeeper として WebSocket エンドポイントを単一場所で宣言しておく。
-const DEFAULT_WEBSOCKET_URL =
-  "wss://0qfs0zhpg6.execute-api.ap-northeast-1.amazonaws.com/Akio1113?role=member";
 
 export default function App() {
   const slotManager = useMemo(() => new SlotMachineManager(), []);
   const layout = useSlotLayout(slotManager.reelCount);
+  const animationsEnabled = useViewportMotionGuard();
   const appClassName = useMemo(
     () => `app ${layout.isDesktop ? "app--desktop" : "app--mobile"}`,
     [layout.isDesktop],
@@ -28,24 +27,7 @@ export default function App() {
     return params.get("roomId") ?? "";
   }, []);
 
-  const websocketUrl = useMemo(
-    () => {
-      const baseUrl = import.meta.env.VITE_WEBSOCKET_URL ?? DEFAULT_WEBSOCKET_URL;
-      if (!roomId) {
-        return baseUrl;
-      }
-
-      try {
-        const url = new URL(baseUrl);
-        url.searchParams.set("roomId", roomId);
-        return url.toString();
-      } catch {
-        const separator = baseUrl.includes("?") ? "&" : "?";
-        return `${baseUrl}${separator}roomId=${encodeURIComponent(roomId)}`;
-      }
-    },
-    [roomId],
-  );
+  const websocketUrl = useWebsocketUrl(roomId);
 
   const {
     spinning,
@@ -60,17 +42,20 @@ export default function App() {
     onReconnect,
   } = useSlotGame(slotManager, websocketUrl);
 
+  const safeSpinning = animationsEnabled ? spinning : false;
+
   return (
     <div className={appClassName}>
       <SlotMachineSurface
         layout={layout}
         slotManager={slotManager}
-        spinning={spinning}
+        spinning={safeSpinning}
         targetIndexes={targetIndexes}
         spinBaseMs={spinBaseMs}
         reachExtraDelayMs={reachExtraDelayMs}
         highlightMode={highlightMode}
         onReachBlink={onReachBlink}
+        animationsEnabled={animationsEnabled}
       />
 
       {highlightMode === "win" && (
