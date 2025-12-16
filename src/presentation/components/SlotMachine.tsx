@@ -30,13 +30,12 @@ const cyclesPattern = [8, 9, 10];
 // リールが停止する順番を「左 → 右 → 真ん中」となるように定義する。
 const STOP_ORDER = [0, 2, 1];
 const REACH_DIRECTION_IMAGES = [
-  "/direction/bike.png",
-  "/direction/bike.png",
-  "/direction/jockey.png",
-  "/direction/jockey.png",
-  "/direction/jockey.png",
-  "/direction/car.png",
-  "/direction/car.png",
+  "/direction/red.png",
+  "/direction/blue.png",
+  "/direction/blue.png",
+  "/direction/green.png",
+  "/direction/green.png",
+  "/direction/green.png",
 ];
 
 function createInitialIndexes(reelCount: number, symbols: readonly SymbolDef[]) {

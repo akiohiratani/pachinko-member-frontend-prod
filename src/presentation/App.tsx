@@ -12,7 +12,6 @@ import type { RoundStartPayload } from "../usecases/slotMachineManager";
 import { SlotRoundController } from "../usecases/slotRoundController";
 import { SlotMachine } from "./components/SlotMachine";
 import { WelcomeModal } from "./components/WelcomeModal";
-import { JankenAnimation } from "./components/JankenAnimation";
 import { useSlotLayout } from "./hooks/useSlotLayout";
 import "./App.css";
 
@@ -197,7 +196,6 @@ export default function App() {
       {highlightMode === "win" && (
         <>
           <div className="slot-machine-win-overlay" />
-          <JankenAnimation active />
         </>
       )}
       {showWelcome && <WelcomeModal onTap={handleWelcomeTap} />}
