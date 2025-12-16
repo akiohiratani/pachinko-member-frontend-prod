@@ -12,7 +12,7 @@ export async function initRuntimeConfig(): Promise<RuntimeConfig | null> {
 
   initialized = true;
   try {
-    const response = await fetch("/runtime-config.json");
+    const response = await fetch("/runtime-config.sample.json", { cache: "no-store" });
     if (!response.ok) {
       console.warn(`Failed to load runtime config: ${response.status}`);
       return null;
