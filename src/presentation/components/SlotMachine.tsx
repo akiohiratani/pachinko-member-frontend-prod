@@ -2,7 +2,7 @@
  * SlotMachine コンポーネントは Presentational Component。
  * SlotRoundController から受け取る状態を描画する View 層として振る舞う。
  */
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { SymbolDef } from "../../domain/symbols";
 import { SlotReel } from "./SlotReel";
@@ -23,6 +23,7 @@ type SlotMachineProps = {
   symbols: readonly SymbolDef[];
   highlightMode: "none" | "reach" | "win";
   onReachBlink?: () => void;
+  onSpinComplete?: () => void;
   machineScale?: number;
   animationsEnabled?: boolean;
 };
@@ -80,6 +81,7 @@ export function SlotMachine({
   symbols,
   highlightMode,
   onReachBlink,
+  onSpinComplete,
   machineScale = 1,
   animationsEnabled = true,
 }: SlotMachineProps) {
@@ -157,6 +159,32 @@ export function SlotMachine({
     setReachDirection(pool[index]);
   }, [spinning, highlightMode]);
 
+  const [spinToken, setSpinToken] = useState(0);
+  const settledReelsRef = useRef<Set<number>>(new Set());
+  const prevSpinningRef = useRef(false);
+
+  useEffect(() => {
+    if (spinning && !prevSpinningRef.current) {
+      setSpinToken((token) => token + 1);
+    }
+    prevSpinningRef.current = spinning;
+  }, [spinning, targetIndexes]);
+
+  useEffect(() => {
+    settledReelsRef.current = new Set();
+  }, [spinToken]);
+
+  const handleReelSettled = useCallback(
+    (reelIndex: number, token: number) => {
+      if (token !== spinToken) return;
+      settledReelsRef.current.add(reelIndex);
+      if (settledReelsRef.current.size === reelCount) {
+        onSpinComplete?.();
+      }
+    },
+    [reelCount, onSpinComplete, spinToken],
+  );
+
   return (
     <div className={wrapperClassName}>
       {/* リーチ演出中は専用の煽り演出を表示し、ユーザーの期待感を高める。 */}
@@ -226,6 +254,8 @@ export function SlotMachine({
                   highlightColor={
                     spinning && highlightMode === "reach" ? reachBlinkColor : null
                   }
+                  spinToken={spinToken}
+                  onSettled={(token) => handleReelSettled(reelIndex, token)}
                 />
               </div>
             );

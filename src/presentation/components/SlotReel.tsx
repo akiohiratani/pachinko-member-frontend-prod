@@ -16,6 +16,8 @@ type SlotReelProps = {
   spinning: boolean;
   symbols: readonly SymbolDef[];
   highlightColor: string | null;
+  spinToken: number;
+  onSettled?: (token: number) => void;
 };
 
 export function SlotReel({
@@ -29,6 +31,8 @@ export function SlotReel({
   spinning,
   symbols,
   highlightColor,
+  spinToken,
+  onSettled,
 }: SlotReelProps) {
   const symbolCount = symbols.length;
   const listLength = cycles * symbolCount + symbolCount;
@@ -44,12 +48,19 @@ export function SlotReel({
     return symbolCount > 0 ? Math.floor(Math.random() * symbolCount) : 0;
   });
   const [hasStarted, setHasStarted] = React.useState(false);
+  const reportedTokenRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     if (spinning) {
       setHasStarted(true);
     }
   }, [spinning]);
+
+  React.useEffect(() => {
+    if (spinning) {
+      reportedTokenRef.current = null;
+    }
+  }, [spinning, spinToken]);
 
   const finalOffset = Math.round(-(cycles * symbolCount * itemHeight + targetIndex * itemHeight));
   const initialOffset = -initialIndex * itemHeight;
@@ -62,6 +73,17 @@ export function SlotReel({
     transform: `translate3d(0, ${spinning ? finalOffset : restingOffset}px, 0)`,
     willChange: spinning ? "transform" : undefined,
   };
+
+  const handleTransitionEnd = React.useCallback(
+    (event: React.TransitionEvent<HTMLDivElement>) => {
+      if (!spinning) return;
+      if (event.propertyName !== "transform") return;
+      if (reportedTokenRef.current === spinToken) return;
+      reportedTokenRef.current = spinToken;
+      onSettled?.(spinToken);
+    },
+    [onSettled, spinToken, spinning],
+  );
 
   return (
     <div
@@ -81,7 +103,7 @@ export function SlotReel({
         transform: spinning ? "scale(1.12)" : "scale(1)",
       }}
     >
-      <div style={trackStyle}>
+      <div style={trackStyle} onTransitionEnd={handleTransitionEnd}>
         {trackSymbols.map((symbol, index) => (
           <div
             key={index}
