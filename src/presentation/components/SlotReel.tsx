@@ -91,9 +91,9 @@ export function SlotReel({
         width: reelWidth,
         height: itemHeight,
         overflow: "hidden",
-        background: "#ffffff",
+        background: "rgba(255,255,255,0.92)",
         borderRadius: 12,
-        outline: "1px solid #e5e7eb",
+        border: "1px solid rgba(255,255,255,0.14)",
         position: "relative",
         boxShadow: highlightColor
           ? `0 20px 40px rgba(15,23,42,0.25), 0 0 0 4px ${highlightColor}`
@@ -112,9 +112,8 @@ export function SlotReel({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: index % symbolCount === 0 ? "#fafafa" : "#ffffff",
+              background: index % symbolCount === 0 ? "#f8fafc" : "#ffffff",
               boxSizing: "border-box",
-              borderBottom: "1px solid #f0f2f5",
               padding: Math.max(8, Math.floor(itemHeight * 0.08)),
             }}
           >
@@ -137,27 +136,6 @@ export function SlotReel({
           </div>
         ))}
       </div>
-
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(to bottom, rgba(15,23,42,0.06), transparent 24%, transparent 76%, rgba(15,23,42,0.06))",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: "linear-gradient(to bottom, rgba(2,6,23,0.08), rgba(2,6,23,0.08))",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: `0 ${Math.floor(itemHeight / 2)}px`,
-          backgroundSize: "100% 1px",
-          pointerEvents: "none",
-        }}
-      />
     </div>
   );
 }
