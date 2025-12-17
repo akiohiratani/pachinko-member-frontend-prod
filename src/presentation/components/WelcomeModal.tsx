@@ -35,7 +35,6 @@ export function WelcomeModal({ onTap }: WelcomeModalProps) {
           padding: "clamp(24px, 6vw, 40px) clamp(20px, 7vw, 36px)",
           textAlign: "center",
           boxShadow: "0 24px 64px rgba(15,23,42,0.18)",
-          border: "1px solid rgba(148,163,184,0.2)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
