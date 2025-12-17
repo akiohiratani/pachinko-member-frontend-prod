@@ -227,8 +227,6 @@ export class SlotRoundController {
     callbacks: RoundLifecycleCallbacks,
     effects?: SoundEffects | null,
   ): void {
-    const waitPromise = callbacks.waitForSpinComplete?.() ?? Promise.resolve();
-
     const triggerFinish = () => {
       if (this.finishTriggered) return;
       this.finishTriggered = true;
@@ -261,22 +259,28 @@ export class SlotRoundController {
       })();
     };
 
-    this.finishTimer = this.timers.setTimeout(() => {
-      this.finishTimer = null;
-      triggerFinish();
-    }, plan.totalSpinMs);
+    const waitPromise = callbacks.waitForSpinComplete?.() ?? Promise.resolve();
+    let spinCompleted = !callbacks.waitForSpinComplete;
+    let timerElapsed = false;
 
     (async () => {
       try {
         await waitPromise;
-        if (this.finishTimer !== null) {
-          this.timers.clearTimeout(this.finishTimer);
-          this.finishTimer = null;
+        spinCompleted = true;
+        if (timerElapsed) {
+          triggerFinish();
         }
-        triggerFinish();
       } catch {
         /* wait が失敗した場合はフォールバックタイマーに委ねる。 */
       }
     })();
+
+    this.finishTimer = this.timers.setTimeout(() => {
+      this.finishTimer = null;
+      timerElapsed = true;
+      if (spinCompleted) {
+        triggerFinish();
+      }
+    }, plan.totalSpinMs);
   }
 }
