@@ -68,6 +68,12 @@ export type RoundLifecycleCallbacks = {
    * 勝利演出の開始を通知する。
    */
   onWin(): void;
+  /**
+   * リールのアニメーション完了を待つための Promise を返す。
+   * Presentation 層が transitionend/animationend をフックして解決する。
+   * フォールバックは use case 側のタイマーでハンドリングする。
+   */
+  waitForSpinComplete?(): Promise<void>;
 };
 
 /**
@@ -83,6 +89,7 @@ export class SlotRoundController {
   private firstFrame: AnimationHandle = null;
   private secondFrame: AnimationHandle = null;
   private reachActive = false;
+  private finishTriggered = false;
   private readonly slotManager: SlotMachineManager;
   private readonly timers: TimerAPI;
   private readonly animation: AnimationAPI;
@@ -168,6 +175,7 @@ export class SlotRoundController {
     if (this.reachActive) {
       this.reachActive = false;
     }
+    this.finishTriggered = false;
   }
 
   private shouldTriggerReach(plan: RoundPlan): boolean {
@@ -219,8 +227,11 @@ export class SlotRoundController {
     callbacks: RoundLifecycleCallbacks,
     effects?: SoundEffects | null,
   ): void {
-    this.finishTimer = this.timers.setTimeout(() => {
-      this.finishTimer = null;
+    const waitPromise = callbacks.waitForSpinComplete?.() ?? Promise.resolve();
+
+    const triggerFinish = () => {
+      if (this.finishTriggered) return;
+      this.finishTriggered = true;
       if (!plan.isWin) return;
 
       if (this.reachStartTimer !== null) {
@@ -248,6 +259,24 @@ export class SlotRoundController {
           /* 音声再生に失敗した場合は演出を開始しない。 */
         }
       })();
+    };
+
+    this.finishTimer = this.timers.setTimeout(() => {
+      this.finishTimer = null;
+      triggerFinish();
     }, plan.totalSpinMs);
+
+    (async () => {
+      try {
+        await waitPromise;
+        if (this.finishTimer !== null) {
+          this.timers.clearTimeout(this.finishTimer);
+          this.finishTimer = null;
+        }
+        triggerFinish();
+      } catch {
+        /* wait が失敗した場合はフォールバックタイマーに委ねる。 */
+      }
+    })();
   }
 }

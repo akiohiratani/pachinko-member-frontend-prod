@@ -19,6 +19,7 @@ type SlotGameState = {
 
 type SlotGameHandlers = {
   onReachBlink(): void;
+  onSpinComplete(): void;
   onWelcomeTap(): void;
   onReconnect(): void;
 };
@@ -43,6 +44,7 @@ export function useSlotGame(
   const websocketRef = useRef<SlotWebSocketGateway | null>(null);
   const roundControllerRef = useRef<SlotRoundController | null>(null);
   const suppressCloseErrorRef = useRef(false);
+  const spinCompletionResolverRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     slotManager.preloadSymbols();
@@ -83,6 +85,20 @@ export function useSlotGame(
     websocketRef.current?.disconnect();
   }, []);
 
+  const awaitSpinCompletion = useCallback(() => {
+    return new Promise<void>((resolve) => {
+      spinCompletionResolverRef.current = () => {
+        spinCompletionResolverRef.current = null;
+        resolve();
+      };
+    });
+  }, []);
+
+  const notifySpinComplete = useCallback(() => {
+    spinCompletionResolverRef.current?.();
+    spinCompletionResolverRef.current = null;
+  }, []);
+
   const handleRoundStart = useCallback(
     (payload: RoundStartPayload) => {
       const controller = roundControllerRef.current;
@@ -111,11 +127,12 @@ export function useSlotGame(
             setHighlightMode("win");
             disconnectSilently();
           },
+          waitForSpinComplete: awaitSpinCompletion,
         },
         soundEffectsRef.current,
       );
     },
-    [disconnectSilently],
+    [disconnectSilently, awaitSpinCompletion],
   );
 
   const connectWebSocket = useCallback(() => {
@@ -170,6 +187,7 @@ export function useSlotGame(
       showWelcome,
       connectionError,
       onReachBlink,
+      onSpinComplete: notifySpinComplete,
       onWelcomeTap,
       onReconnect: connectWebSocket,
     }),
@@ -182,6 +200,7 @@ export function useSlotGame(
       showWelcome,
       connectionError,
       onReachBlink,
+      notifySpinComplete,
       onWelcomeTap,
       connectWebSocket,
     ],
