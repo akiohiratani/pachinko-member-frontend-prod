@@ -50,10 +50,10 @@ export function useSlotGame(
 
   useEffect(() => {
     const effects = new SoundEffects(
-      "/win.mp3",
-      "/spinStart.mp3",
-      "/winAlert.mp3",
-      "/reachmusic.mp3",
+      "/sounds/win.mp3",
+      "/sounds/spinStart.mp3",
+      "/sounds/winAlert.mp3",
+      "/sounds/reachmusic.mp3",
     );
     soundEffectsRef.current = effects;
     return () => {
