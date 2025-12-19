@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-240 -240 480 480" width="512" height="512" role="img" aria-label="Cute burning mosquito coil spiral logo with A">
+  <defs>
+    <!-- スパイラル：濃い緑 -->
+    <linearGradient id="deepGreen" x1="-220" y1="-220" x2="220" y2="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2e7d32"/>
+      <stop offset="1" stop-color="#0b3d16"/>
+    </linearGradient>
+
+    <!-- やわらか影 -->
+    <filter id="softShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#000" flood-opacity="0.22"/>
+    </filter>
+
+    <!-- A のふわっとグロー -->
+    <filter id="aGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="9" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- ほっぺ -->
+    <radialGradient id="cheek" cx="35%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#ff8a80" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#ff8a80" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- 燃焼グロー -->
+    <radialGradient id="emberGlow">
+      <stop offset="0" stop-color="#fff9c4"/>
+      <stop offset="0.45" stop-color="#ffcc80"/>
+      <stop offset="0.8" stop-color="#ff7043" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#ff7043" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- 煙 -->
+    <linearGradient id="smoke" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b0bec5" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#b0bec5" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- スパイラル -->
+  <path
+    d="
+      M 0 -170
+      C 95 -170 170 -105 170 0
+      C 170 120 85 175 0 175
+      C -95 175 -165 115 -165 25
+      C -165 -70 -95 -130 -15 -130
+      C 60 -130 120 -85 120 -10
+      C 120 65 65 110 5 110
+      C -50 110 -90 75 -90 30
+      C -90 -20 -60 -55 -20 -55
+      C 20 -55 45 -30 45 0
+      C 45 30 22 48 0 48
+    "
+    fill="none"
+    stroke="url(#deepGreen)"
+    stroke-width="20"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#softShadow)"
+  />
+
+  <!-- 燃えてる先端 -->
+  <g transform="translate(0,-170)">
+    <circle r="40" fill="url(#emberGlow)" filter="url(#aGlow)"/>
+    <circle r="10" fill="#fffde7"/>
+    <circle cx="-14" cy="-6" r="2.6" fill="#ffe082" opacity="0.95"/>
+    <circle cx="16" cy="-10" r="2.2" fill="#fff9c4" opacity="0.9"/>
+    <circle cx="12" cy="12" r="2.0" fill="#ffcc80" opacity="0.85"/>
+  </g>
+
+  <!-- 煙 -->
+  <path d="M 8 -200 C 34 -217 20 -242 2 -255 C -16 -268 -10 -286 12 -300"
+        fill="none" stroke="url(#smoke)" stroke-width="10" stroke-linecap="round" opacity="0.85"/>
+  <path d="M -10 -198 C -34 -213 -20 -237 -2 -250 C 14 -263 10 -282 -12 -296"
+        fill="none" stroke="url(#smoke)" stroke-width="7" stroke-linecap="round" opacity="0.65"/>
+
+  <!-- Aの背景バッジ -->
+  <circle cx="0" cy="25" r="108" fill="#ffffff" opacity="0.9" filter="url(#softShadow)"/>
+  <circle cx="0" cy="25" r="108" fill="none" stroke="#e8f5e9" stroke-width="10" opacity="0.9"/>
+
+  <!-- ほっぺ -->
+  <g transform="translate(0,25)" opacity="0.9">
+    <circle cx="-62" cy="40" r="22" fill="url(#cheek)"/>
+    <circle cx="62" cy="40" r="22" fill="url(#cheek)"/>
+  </g>
+
+  <!-- A -->
+  <text
+    x="0" y="92"
+    text-anchor="middle"
+    font-family="Rounded Mplus 1c, Nunito, Quicksand, system-ui, sans-serif"
+    font-size="210"
+    font-weight="900"
+    fill="#1b5e20"
+    stroke="#ffffff"
+    stroke-width="18"
+    paint-order="stroke fill"
+    filter="url(#aGlow)"
+  >
+    A
+  </text>
+
+  <!-- ハイライト -->
+  <path d="M -55 -5 C -20 -40 20 -40 55 -5"
+        fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity="0.45"/>
+</svg>
