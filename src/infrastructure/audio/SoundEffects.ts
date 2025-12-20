@@ -38,12 +38,7 @@ export class SoundEffects {
           this.spinAudio,
           this.winAlertAudio,
           this.reachAudio,
-        ].map(async (audio) => {
-          if (!audio) return;
-          await audio.play();
-          audio.pause();
-          audio.currentTime = 0;
-        }),
+        ].map((audio) => this.unlockAudioSilently(audio)),
       );
       return true;
     } catch {
@@ -113,5 +108,24 @@ export class SoundEffects {
     if (!this.reachAudio) return;
     this.reachAudio.pause();
     this.reachAudio.currentTime = 0;
+  }
+
+  private async unlockAudioSilently(audio: HTMLAudioElement | null) {
+    if (!audio) return;
+
+    const originalMuted = audio.muted;
+    const originalVolume = audio.volume;
+    audio.muted = true;
+    audio.volume = 0;
+
+    try {
+      audio.currentTime = 0;
+      await audio.play();
+      audio.pause();
+      audio.currentTime = 0;
+    } finally {
+      audio.muted = originalMuted;
+      audio.volume = originalVolume;
+    }
   }
 }
