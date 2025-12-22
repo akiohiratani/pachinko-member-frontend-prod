@@ -33,12 +33,9 @@ const cyclesPattern = [8, 9, 10];
 // リールが停止する順番を「左 → 右 → 真ん中」となるように定義する。
 const STOP_ORDER = [0, 2, 1];
 const REACH_DIRECTION_IMAGES = [
-  "/direction/red.png",
-  "/direction/blue.png",
-  "/direction/blue.png",
-  "/direction/green.png",
-  "/direction/green.png",
-  "/direction/green.png",
+  "/direction/a.png",
+  "/direction/b.png",
+  "/direction/c.png",
 ];
 
 function createInitialIndexes(reelCount: number, symbols: readonly SymbolDef[]) {
@@ -154,7 +151,7 @@ export function SlotMachine({
       setReachDirection(null);
       return;
     }
-    const pool = [...REACH_DIRECTION_IMAGES, null];
+    const pool = [...REACH_DIRECTION_IMAGES];
     const index = Math.floor(Math.random() * pool.length);
     setReachDirection(pool[index]);
   }, [spinning, highlightMode]);
