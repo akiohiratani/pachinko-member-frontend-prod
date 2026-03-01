@@ -6,6 +6,7 @@ import { SlotMachineManager, type RoundStartPayload } from "../../usecases/slotM
 import { SlotRoundController } from "../../usecases/slotRoundController";
 
 type HighlightMode = "none" | "reach" | "win";
+type BlackoutPhase = "off" | "closing" | "closed" | "opening";
 
 type SlotGameState = {
   spinning: boolean;
@@ -17,6 +18,7 @@ type SlotGameState = {
     shiftDelayMs: number;
     shiftDurationMs: number;
   } | null;
+  blackoutPhase: BlackoutPhase;
   highlightMode: HighlightMode;
   showWelcome: boolean;
   connectionError: string | null;
@@ -43,6 +45,7 @@ export function useSlotGame(
   const [reachExtraDelayMs, setReachExtraDelayMs] = useState<number>(0);
   const [fakeMiddleStop, setFakeMiddleStop] = useState<SlotGameState["fakeMiddleStop"]>(null);
   const [highlightMode, setHighlightMode] = useState<HighlightMode>("none");
+  const [blackoutPhase, setBlackoutPhase] = useState<BlackoutPhase>("off");
   const [showWelcome, setShowWelcome] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
@@ -51,6 +54,8 @@ export function useSlotGame(
   const roundControllerRef = useRef<SlotRoundController | null>(null);
   const suppressCloseErrorRef = useRef(false);
   const spinCompletionResolverRef = useRef<(() => void) | null>(null);
+  const blackoutTimersRef = useRef<number[]>([]);
+  const plannedBlackoutDurationRef = useRef<number | null>(null);
 
   useEffect(() => {
     slotManager.preloadSymbols();
@@ -80,11 +85,49 @@ export function useSlotGame(
   useEffect(() => {
     roundControllerRef.current = new SlotRoundController(slotManager);
     return () => {
+      blackoutTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+      blackoutTimersRef.current = [];
+      plannedBlackoutDurationRef.current = null;
       roundControllerRef.current?.dispose();
       roundControllerRef.current = null;
       websocketRef.current?.disconnect();
     };
   }, [slotManager]);
+
+
+  const clearBlackoutTimers = useCallback(() => {
+    blackoutTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    blackoutTimersRef.current = [];
+  }, []);
+
+  const scheduleBlackout = useCallback((durationMs: number) => {
+    clearBlackoutTimers();
+
+    const startDelayMs = 360;
+    const puchunMs = 150;
+    const holdMs = Math.max(0, durationMs - puchunMs * 2);
+
+    blackoutTimersRef.current.push(
+      window.setTimeout(() => {
+        setBlackoutPhase("closing");
+        blackoutTimersRef.current.push(
+          window.setTimeout(() => {
+            setBlackoutPhase("closed");
+          }, puchunMs),
+        );
+        blackoutTimersRef.current.push(
+          window.setTimeout(() => {
+            setBlackoutPhase("opening");
+          }, puchunMs + holdMs),
+        );
+        blackoutTimersRef.current.push(
+          window.setTimeout(() => {
+            setBlackoutPhase("off");
+          }, puchunMs + holdMs + puchunMs),
+        );
+      }, startDelayMs),
+    );
+  }, [clearBlackoutTimers]);
 
   const disconnectSilently = useCallback(() => {
     suppressCloseErrorRef.current = true;
@@ -117,6 +160,9 @@ export function useSlotGame(
             setSpinBaseMs(roundPlan.baseSpinDurationMs);
             setReachExtraDelayMs(roundPlan.reachExtraDelayMs);
             setFakeMiddleStop(roundPlan.fakeMiddleStop);
+            plannedBlackoutDurationRef.current = roundPlan.fakeReachBlackout?.durationMs ?? null;
+            clearBlackoutTimers();
+            setBlackoutPhase("off");
             setSpinning(false);
             setHighlightMode("none");
           },
@@ -126,6 +172,9 @@ export function useSlotGame(
           },
           onReachStart: () => {
             setHighlightMode("reach");
+            if (plannedBlackoutDurationRef.current) {
+              scheduleBlackout(plannedBlackoutDurationRef.current);
+            }
           },
           onReachEnd: () => {
             setHighlightMode("none");
@@ -139,7 +188,7 @@ export function useSlotGame(
         soundEffectsRef.current,
       );
     },
-    [disconnectSilently, awaitSpinCompletion],
+    [clearBlackoutTimers, disconnectSilently, awaitSpinCompletion, scheduleBlackout],
   );
 
   const connectWebSocket = useCallback(() => {
@@ -191,6 +240,7 @@ export function useSlotGame(
       spinBaseMs,
       reachExtraDelayMs,
       fakeMiddleStop,
+      blackoutPhase,
       highlightMode,
       showWelcome,
       connectionError,
@@ -205,6 +255,7 @@ export function useSlotGame(
       spinBaseMs,
       reachExtraDelayMs,
       fakeMiddleStop,
+      blackoutPhase,
       highlightMode,
       showWelcome,
       connectionError,

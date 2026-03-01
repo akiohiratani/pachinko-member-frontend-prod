@@ -162,6 +162,7 @@ export function SlotMachine({
     setReachDirection(pool[index]);
   }, [spinning, highlightMode]);
 
+
   const [spinToken, setSpinToken] = useState(0);
   const settledReelsRef = useRef<Set<number>>(new Set());
   const prevSpinningRef = useRef(false);

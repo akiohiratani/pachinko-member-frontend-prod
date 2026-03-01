@@ -290,3 +290,55 @@
   animation-name: slot-machine-reel-bob-right;
   z-index: 4;
 }
+
+
+@keyframes slot-machine-blackout-puchun-close {
+  0% {
+    clip-path: inset(0 0 0 0);
+    opacity: 0;
+  }
+  55% {
+    clip-path: inset(46% 0 46% 0);
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+@keyframes slot-machine-blackout-puchun-open {
+  0% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+  45% {
+    clip-path: inset(46% 0 46% 0);
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 0;
+  }
+}
+
+.slot-machine-blackout-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: #000;
+  z-index: 999;
+}
+
+.slot-machine-blackout-overlay--closing {
+  opacity: 1;
+  animation: slot-machine-blackout-puchun-close 150ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slot-machine-blackout-overlay--closed {
+  opacity: 1;
+}
+
+.slot-machine-blackout-overlay--opening {
+  animation: slot-machine-blackout-puchun-open 150ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
