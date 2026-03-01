@@ -57,50 +57,45 @@ export function SlotReel({
   });
   const [hasStarted, setHasStarted] = React.useState(false);
   const [displayTargetIndex, setDisplayTargetIndex] = React.useState(targetIndex);
+  const [symbolShiftIndex, setSymbolShiftIndex] = React.useState<number | null>(null);
+  const [symbolShiftDurationMs, setSymbolShiftDurationMs] = React.useState(0);
   const reportedTokenRef = React.useRef<number | null>(null);
 
-  const [symbolMorphActive, setSymbolMorphActive] = React.useState(false);
-  const symbolMorphClearTimerRef = React.useRef<number | null>(null);
-
   React.useEffect(() => {
-    if (symbolMorphClearTimerRef.current !== null) {
-      window.clearTimeout(symbolMorphClearTimerRef.current);
-      symbolMorphClearTimerRef.current = null;
-    }
-
-    const canMorph =
-      symbolMorphFromIndex !== null &&
-      symbolMorphToIndex !== null &&
-      symbolMorphDurationMs > 0;
-
-    if (!canMorph) {
-      setSymbolMorphActive(false);
-      return;
-    }
-
-    setSymbolMorphActive(true);
-    symbolMorphClearTimerRef.current = window.setTimeout(() => {
-      symbolMorphClearTimerRef.current = null;
-      setSymbolMorphActive(false);
-    }, symbolMorphDurationMs);
-
-    return () => {
-      if (symbolMorphClearTimerRef.current !== null) {
-        window.clearTimeout(symbolMorphClearTimerRef.current);
-        symbolMorphClearTimerRef.current = null;
-      }
-    };
-  }, [symbolMorphDurationMs, symbolMorphFromIndex, symbolMorphToIndex, symbolMorphToken]);
-
-  React.useEffect(() => {
-    if (!spinning) {
+    if (spinning) {
+      setHasStarted(true);
       setDisplayTargetIndex(targetIndex);
       return;
     }
 
+    if (symbolShiftIndex === null) {
+      setDisplayTargetIndex(targetIndex);
+    }
+  }, [spinning, symbolShiftIndex, targetIndex]);
+
+  React.useEffect(() => {
+    const canShift =
+      symbolMorphFromIndex !== null &&
+      symbolMorphToIndex !== null &&
+      symbolMorphDurationMs > 0;
+
+    if (!canShift) {
+      return;
+    }
+
     setHasStarted(true);
-    setDisplayTargetIndex(targetIndex);
-  }, [spinMs, spinning, targetIndex]);
+    setSymbolShiftIndex(symbolMorphFromIndex);
+    setSymbolShiftDurationMs(0);
+
+    const rafId = window.requestAnimationFrame(() => {
+      setSymbolShiftDurationMs(symbolMorphDurationMs);
+      setSymbolShiftIndex(symbolMorphToIndex);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+    };
+  }, [symbolMorphDurationMs, symbolMorphFromIndex, symbolMorphToIndex, symbolMorphToken]);
 
   React.useEffect(() => {
     if (spinning) {
@@ -114,23 +109,38 @@ export function SlotReel({
   const initialOffset = -initialIndex * itemHeight;
   const restingOffset = hasStarted ? 0 : initialOffset;
 
+  const shiftOffset =
+    symbolShiftIndex === null ? restingOffset : -(symbolShiftIndex * itemHeight);
+
   const trackStyle: React.CSSProperties = {
     transitionProperty: "transform",
-    transitionDuration: spinning ? `${spinMs}ms` : "0ms",
-    transitionTimingFunction: spinning ? easing : "linear",
-    transform: `translate3d(0, ${spinning ? finalOffset : restingOffset}px, 0)`,
-    willChange: spinning ? "transform" : undefined,
+    transitionDuration: spinning
+      ? `${spinMs}ms`
+      : symbolShiftIndex !== null
+        ? `${symbolShiftDurationMs}ms`
+        : "0ms",
+    transitionTimingFunction: spinning ? easing : "cubic-bezier(0.22, 1, 0.36, 1)",
+    transform: `translate3d(0, ${spinning ? finalOffset : shiftOffset}px, 0)`,
+    willChange: spinning || symbolShiftIndex !== null ? "transform" : undefined,
   };
 
   const handleTransitionEnd = React.useCallback(
     (event: React.TransitionEvent<HTMLDivElement>) => {
-      if (!spinning) return;
       if (event.propertyName !== "transform") return;
-      if (reportedTokenRef.current === spinToken) return;
-      reportedTokenRef.current = spinToken;
-      onSettled?.(spinToken);
+
+      if (spinning) {
+        if (reportedTokenRef.current === spinToken) return;
+        reportedTokenRef.current = spinToken;
+        onSettled?.(spinToken);
+        return;
+      }
+
+      if (symbolShiftIndex !== null) {
+        setSymbolShiftIndex(null);
+        setSymbolShiftDurationMs(0);
+      }
     },
-    [onSettled, spinToken, spinning],
+    [onSettled, spinToken, spinning, symbolShiftIndex],
   );
 
   return (
@@ -184,28 +194,6 @@ export function SlotReel({
           </div>
         ))}
       </div>
-      {symbolMorphActive && symbolMorphFromIndex !== null && symbolMorphToIndex !== null && (
-        <div
-          className="slot-reel-symbol-morph"
-          style={{
-            animationDuration: `${symbolMorphDurationMs}ms`,
-          }}
-          aria-hidden="true"
-        >
-          <img
-            className="slot-reel-symbol-morph__from"
-            src={symbols[symbolMorphFromIndex]?.src}
-            alt=""
-            draggable={false}
-          />
-          <img
-            className="slot-reel-symbol-morph__to"
-            src={symbols[symbolMorphToIndex]?.src}
-            alt=""
-            draggable={false}
-          />
-        </div>
-      )}
     </div>
   );
 }
