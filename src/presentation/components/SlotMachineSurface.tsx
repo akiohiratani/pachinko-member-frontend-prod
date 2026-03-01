@@ -13,8 +13,11 @@ type SlotMachineSurfaceProps = {
   spinBaseMs: number;
   reachExtraDelayMs: number;
   highlightMode: "none" | "reach" | "win";
+  winSymbolShiftSequence: number;
+  winSymbolShiftMs: number;
   onReachBlink?: () => void;
   onSpinComplete?: () => void;
+  onWinSymbolShiftComplete?: () => void;
   animationsEnabled?: boolean;
 };
 
@@ -26,8 +29,11 @@ export function SlotMachineSurface({
   spinBaseMs,
   reachExtraDelayMs,
   highlightMode,
+  winSymbolShiftSequence,
+  winSymbolShiftMs,
   onReachBlink,
   onSpinComplete,
+  onWinSymbolShiftComplete,
   animationsEnabled = true,
 }: SlotMachineSurfaceProps) {
   const { isDesktop, containerMax, gap, reelWidth, itemHeight } = layout;
@@ -61,8 +67,11 @@ export function SlotMachineSurface({
         containerMax={machineMaxWidth}
         symbols={SYMBOLS}
         highlightMode={highlightMode}
+        winSymbolShiftSequence={winSymbolShiftSequence}
+        winSymbolShiftMs={winSymbolShiftMs}
         onReachBlink={onReachBlink}
         onSpinComplete={onSpinComplete}
+        onWinSymbolShiftComplete={onWinSymbolShiftComplete}
         machineScale={machineScale}
         animationsEnabled={animationsEnabled}
       />

@@ -14,6 +14,8 @@ type SlotReelProps = {
   spinMs: number;
   easing: string;
   spinning: boolean;
+  animationMode: "spin" | "shift";
+  shiftMs: number;
   symbols: readonly SymbolDef[];
   highlightColor: string | null;
   spinToken: number;
@@ -29,6 +31,8 @@ export function SlotReel({
   spinMs,
   easing,
   spinning,
+  animationMode,
+  shiftMs,
   symbols,
   highlightColor,
   spinToken,
@@ -75,7 +79,9 @@ export function SlotReel({
 
   const trackStyle: React.CSSProperties = {
     transitionProperty: "transform",
-    transitionDuration: spinning ? `${spinMs}ms` : "0ms",
+    transitionDuration: spinning
+      ? `${animationMode === "shift" ? Math.max(80, shiftMs) : spinMs}ms`
+      : "0ms",
     transitionTimingFunction: spinning ? easing : "linear",
     transform: `translate3d(0, ${spinning ? finalOffset : restingOffset}px, 0)`,
     willChange: spinning ? "transform" : undefined,

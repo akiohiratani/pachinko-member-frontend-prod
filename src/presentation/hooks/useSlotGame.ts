@@ -19,11 +19,14 @@ type SlotGameState = {
   highlightMode: HighlightMode;
   showWelcome: boolean;
   connectionError: string | null;
+  winSymbolShiftSequence: number;
+  winSymbolShiftMs: number;
 };
 
 type SlotGameHandlers = {
   onReachBlink(): void;
   onSpinComplete(): void;
+  onWinSymbolShiftComplete(): void;
   onWelcomeTap(): void;
   onReconnect(): void;
 };
@@ -31,6 +34,7 @@ type SlotGameHandlers = {
 type SlotGameHook = SlotGameState & SlotGameHandlers;
 
 const WIN_SYMBOL_SHIFT_PROBABILITY = 0.25;
+const WIN_SYMBOL_SHIFT_MS = 180;
 
 export function useSlotGame(
   slotManager: SlotMachineManager,
@@ -46,6 +50,8 @@ export function useSlotGame(
   const [blackoutPhase, setBlackoutPhase] = useState<BlackoutPhase>("off");
   const [showWelcome, setShowWelcome] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [winSymbolShiftSequence, setWinSymbolShiftSequence] = useState(0);
+  const [winSymbolShiftMs, setWinSymbolShiftMs] = useState(0);
 
   const soundEffectsRef = useRef<SoundEffects | null>(null);
   const websocketRef = useRef<SlotWebSocketGateway | null>(null);
@@ -142,25 +148,6 @@ export function useSlotGame(
     websocketRef.current?.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (!pendingWinAfterShiftRef.current) return;
-
-    const expectedIndexes = expectedShiftedIndexesRef.current;
-    if (!expectedIndexes) return;
-
-    if (
-      targetIndexes.length !== expectedIndexes.length ||
-      targetIndexes.some((index, position) => index !== expectedIndexes[position])
-    ) {
-      return;
-    }
-
-    pendingWinAfterShiftRef.current = false;
-    expectedShiftedIndexesRef.current = null;
-    setHighlightMode("win");
-    disconnectSilently();
-  }, [targetIndexes, disconnectSilently]);
-
   const awaitSpinCompletion = useCallback(() => {
     return new Promise<void>((resolve) => {
       spinCompletionResolverRef.current = () => {
@@ -191,6 +178,7 @@ export function useSlotGame(
             setBlackoutPhase("off");
             setSpinning(false);
             setHighlightMode("none");
+            setWinSymbolShiftMs(0);
             pendingWinAfterShiftRef.current = false;
             expectedShiftedIndexesRef.current = null;
           },
@@ -223,6 +211,8 @@ export function useSlotGame(
               );
               pendingWinAfterShiftRef.current = true;
               expectedShiftedIndexesRef.current = shiftedIndexes;
+              setWinSymbolShiftMs(WIN_SYMBOL_SHIFT_MS);
+              setWinSymbolShiftSequence((value) => value + 1);
               setTargetIndexes(shiftedIndexes);
               return;
             }
@@ -237,6 +227,28 @@ export function useSlotGame(
     },
     [clearBlackoutTimers, disconnectSilently, awaitSpinCompletion, scheduleBlackout],
   );
+
+
+  const onWinSymbolShiftComplete = useCallback(() => {
+    if (!pendingWinAfterShiftRef.current) return;
+
+    const expectedIndexes = expectedShiftedIndexesRef.current;
+    if (!expectedIndexes) return;
+
+    const latestIndexes = latestTargetIndexesRef.current;
+    if (
+      latestIndexes.length !== expectedIndexes.length ||
+      latestIndexes.some((index, position) => index !== expectedIndexes[position])
+    ) {
+      return;
+    }
+
+    pendingWinAfterShiftRef.current = false;
+    expectedShiftedIndexesRef.current = null;
+    setWinSymbolShiftMs(0);
+    setHighlightMode("win");
+    disconnectSilently();
+  }, [disconnectSilently]);
 
   const connectWebSocket = useCallback(() => {
     setConnectionError(null);
@@ -290,8 +302,11 @@ export function useSlotGame(
       highlightMode,
       showWelcome,
       connectionError,
+      winSymbolShiftSequence,
+      winSymbolShiftMs,
       onReachBlink,
       onSpinComplete: notifySpinComplete,
+      onWinSymbolShiftComplete,
       onWelcomeTap,
       onReconnect: connectWebSocket,
     }),
@@ -304,8 +319,11 @@ export function useSlotGame(
       highlightMode,
       showWelcome,
       connectionError,
+      winSymbolShiftSequence,
+      winSymbolShiftMs,
       onReachBlink,
       notifySpinComplete,
+      onWinSymbolShiftComplete,
       onWelcomeTap,
       connectWebSocket,
     ],
