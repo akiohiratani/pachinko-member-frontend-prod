@@ -157,15 +157,28 @@ export function SlotMachine({
   }, [spinning, highlightMode]);
 
   const [spinToken, setSpinToken] = useState(0);
+  const [activeFakeStopReel, setActiveFakeStopReel] = useState<number | null>(null);
   const settledReelsRef = useRef<Set<number>>(new Set());
   const prevSpinningRef = useRef(false);
+
+  const isReachPattern =
+    reelCount >= 3 &&
+    targetIndexes.length >= 3 &&
+    targetIndexes[0] === targetIndexes[2];
+  const isWinPattern = targetIndexes.length > 0 && targetIndexes.every((value) => value === targetIndexes[0]);
+  const fakeStopProbability = 0.2;
 
   useEffect(() => {
     if (spinning && !prevSpinningRef.current) {
       setSpinToken((token) => token + 1);
+      if (isReachPattern && Math.random() < fakeStopProbability) {
+        setActiveFakeStopReel(STOP_ORDER[STOP_ORDER.length - 1] ?? null);
+      } else {
+        setActiveFakeStopReel(null);
+      }
     }
     prevSpinningRef.current = spinning;
-  }, [spinning, targetIndexes]);
+  }, [isReachPattern, spinning, targetIndexes]);
 
   useEffect(() => {
     settledReelsRef.current = new Set();
@@ -229,6 +242,21 @@ export function SlotMachine({
               .filter(Boolean)
               .join(" ");
 
+            const symbolCount = symbols.length;
+            const targetIndex = targetIndexes[reelIndex] ?? 0;
+            const isFinalStopReel =
+              orderPosition === STOP_ORDER.length - 1;
+            const fakeStopEnabled =
+              spinning &&
+              symbolCount > 1 &&
+              isFinalStopReel &&
+              activeFakeStopReel === reelIndex;
+            const fallbackFakeIndex =
+              ((targetIndex + symbolCount - 1) % symbolCount + symbolCount) % symbolCount;
+            const fakeStopIndex = isWinPattern
+              ? fallbackFakeIndex
+              : targetIndexes[0] ?? fallbackFakeIndex;
+
             return (
               <div
                 key={reelIndex}
@@ -242,12 +270,14 @@ export function SlotMachine({
                   itemHeight={itemHeight}
                   reelWidth={reelWidth}
                   cycles={cyclesPattern[reelIndex % cyclesPattern.length]}
-                  targetIndex={targetIndexes[reelIndex] ?? 0}
+                  targetIndex={targetIndex}
                   initialIndex={initialIndexes[reelIndex] ?? 0}
                   spinMs={spinMs}
                   easing={easing}
                   spinning={spinning}
                   symbols={symbols}
+                  fakeStopEnabled={fakeStopEnabled}
+                  fakeStopIndex={fakeStopIndex}
                   highlightColor={
                     spinning && highlightMode === "reach" ? reachBlinkColor : null
                   }
