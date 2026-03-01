@@ -12,6 +12,9 @@ type SlotMachineSurfaceProps = {
   targetIndexes: number[];
   spinBaseMs: number;
   reachExtraDelayMs: number;
+  reachFakeoutEnabled: boolean;
+  reachFakeoutIndex: number;
+  reachFakeoutShiftMs: number;
   highlightMode: "none" | "reach" | "win";
   onReachBlink?: () => void;
   onSpinComplete?: () => void;
@@ -25,6 +28,9 @@ export function SlotMachineSurface({
   targetIndexes,
   spinBaseMs,
   reachExtraDelayMs,
+  reachFakeoutEnabled,
+  reachFakeoutIndex,
+  reachFakeoutShiftMs,
   highlightMode,
   onReachBlink,
   onSpinComplete,
@@ -55,6 +61,9 @@ export function SlotMachineSurface({
         reelDelayMs={slotManager.reelDelayMs}
         easing={slotManager.easing}
         reachExtraDelayMs={reachExtraDelayMs}
+        reachFakeoutEnabled={reachFakeoutEnabled}
+        reachFakeoutIndex={reachFakeoutIndex}
+        reachFakeoutShiftMs={reachFakeoutShiftMs}
         reelWidth={reelWidth}
         itemHeight={itemHeight}
         gap={gap}

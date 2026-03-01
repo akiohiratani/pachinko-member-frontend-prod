@@ -15,6 +15,8 @@ type SlotReelProps = {
   easing: string;
   spinning: boolean;
   symbols: readonly SymbolDef[];
+  fakeStopIndex?: number;
+  fakeShiftMs?: number;
   highlightColor: string | null;
   spinToken: number;
   onSettled?: (token: number) => void;
@@ -30,6 +32,8 @@ export function SlotReel({
   easing,
   spinning,
   symbols,
+  fakeStopIndex,
+  fakeShiftMs = 0,
   highlightColor,
   spinToken,
   onSettled,
@@ -49,6 +53,10 @@ export function SlotReel({
   });
   const [hasStarted, setHasStarted] = React.useState(false);
   const reportedTokenRef = React.useRef<number | null>(null);
+  const [currentOffset, setCurrentOffset] = React.useState(0);
+  const [transitionDurationMs, setTransitionDurationMs] = React.useState(0);
+  const [transitionEasing, setTransitionEasing] = React.useState("linear");
+  const [isFakeShiftPending, setIsFakeShiftPending] = React.useState(false);
 
   React.useEffect(() => {
     if (spinning) {
@@ -57,20 +65,58 @@ export function SlotReel({
   }, [spinning]);
 
   React.useEffect(() => {
+    setCurrentOffset(-initialIndex * itemHeight);
+  }, [initialIndex, itemHeight]);
+
+  React.useEffect(() => {
     if (spinning) {
       reportedTokenRef.current = null;
     }
   }, [spinning, spinToken]);
 
   const finalOffset = Math.round(-(cycles * symbolCount * itemHeight + targetIndex * itemHeight));
+  const fakeOffset = Math.round(
+    -(cycles * symbolCount * itemHeight + (fakeStopIndex ?? targetIndex) * itemHeight),
+  );
   const initialOffset = -initialIndex * itemHeight;
   const restingOffset = hasStarted ? 0 : initialOffset;
 
+  React.useEffect(() => {
+    if (!spinning) {
+      setTransitionDurationMs(0);
+      setTransitionEasing("linear");
+      setCurrentOffset(restingOffset);
+      setIsFakeShiftPending(false);
+      return;
+    }
+
+    const shouldUseFakeout =
+      typeof fakeStopIndex === "number" &&
+      fakeStopIndex !== targetIndex &&
+      fakeShiftMs > 0;
+
+    setTransitionDurationMs(spinMs);
+    setTransitionEasing(easing);
+    setCurrentOffset(shouldUseFakeout ? fakeOffset : finalOffset);
+    setIsFakeShiftPending(shouldUseFakeout);
+  }, [
+    spinning,
+    spinToken,
+    restingOffset,
+    spinMs,
+    easing,
+    fakeStopIndex,
+    fakeShiftMs,
+    targetIndex,
+    fakeOffset,
+    finalOffset,
+  ]);
+
   const trackStyle: React.CSSProperties = {
     transitionProperty: "transform",
-    transitionDuration: spinning ? `${spinMs}ms` : "0ms",
-    transitionTimingFunction: spinning ? easing : "linear",
-    transform: `translate3d(0, ${spinning ? finalOffset : restingOffset}px, 0)`,
+    transitionDuration: `${transitionDurationMs}ms`,
+    transitionTimingFunction: transitionEasing,
+    transform: `translate3d(0, ${currentOffset}px, 0)`,
     willChange: spinning ? "transform" : undefined,
   };
 
@@ -78,11 +124,25 @@ export function SlotReel({
     (event: React.TransitionEvent<HTMLDivElement>) => {
       if (!spinning) return;
       if (event.propertyName !== "transform") return;
+      if (isFakeShiftPending) {
+        setIsFakeShiftPending(false);
+        setTransitionDurationMs(fakeShiftMs);
+        setTransitionEasing("cubic-bezier(0.22, 1, 0.36, 1)");
+        setCurrentOffset(finalOffset);
+        return;
+      }
       if (reportedTokenRef.current === spinToken) return;
       reportedTokenRef.current = spinToken;
       onSettled?.(spinToken);
     },
-    [onSettled, spinToken, spinning],
+    [
+      onSettled,
+      spinToken,
+      spinning,
+      isFakeShiftPending,
+      fakeShiftMs,
+      finalOffset,
+    ],
   );
 
   return (

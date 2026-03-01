@@ -22,6 +22,11 @@ export type RoundPlan = {
    * リーチではない場合は 0 として扱います。
    */
   reachExtraDelayMs: number;
+  reachFakeout: {
+    enabled: boolean;
+    fakeIndex: number;
+    shiftMs: number;
+  };
 };
 
 /**
@@ -47,6 +52,7 @@ export class SlotMachineManager {
       targetIndexes[0] === targetIndexes[2];
     // リーチ時は 5~10 秒の余韻を最後のリールへ追加し、演出を長めにする。
     const reachExtraDelayMs = isReach ? randomInt(this.random, 20000, 25000) : 3000;
+    const reachFakeout = this.decideReachFakeout(isWin, isReach, targetIndexes);
 
     // リーチでない通常時の総演出時間を決めたうえで、最後のリール分を除いた基本時間を算出する。
     // リーチの追加演出分は最後のリールに加算されるため、totalSpinMs にのみ反映する。
@@ -74,6 +80,7 @@ export class SlotMachineManager {
       startSound,
       isWin,
       reachExtraDelayMs,
+      reachFakeout,
     };
   }
 
@@ -130,5 +137,44 @@ export class SlotMachineManager {
     return Array.from({ length: SLOT_MACHINE_CONFIG.reelCount }, (_, index) =>
       index === diffReel ? diffSymbol : baseSymbol,
     );
+  }
+
+  private decideReachFakeout(
+    isWin: boolean,
+    isReach: boolean,
+    targetIndexes: number[],
+  ): RoundPlan["reachFakeout"] {
+    if (!isWin || !isReach || targetIndexes.length < 2) {
+      return { enabled: false, fakeIndex: 0, shiftMs: 0 };
+    }
+
+    // 1/3 の確率で「外れたと思いきや当たる」演出を有効化する。
+    const enabled = this.random.float() < 1 / 3;
+    if (!enabled) {
+      return { enabled: false, fakeIndex: 0, shiftMs: 0 };
+    }
+
+    const centerIndex = 1;
+    const hitIndex = targetIndexes[centerIndex] ?? 0;
+    // 「1」が当たり図柄の場合は「5」で一旦止める演出を優先する。
+    // それ以外の当たり図柄でも、必ず別図柄へフェイク停止させる。
+    const fakeIndex =
+      hitIndex === 0
+        ? SYMBOLS.length - 1
+        : this.pickDifferentSymbolIndex(hitIndex);
+
+    return {
+      enabled: true,
+      fakeIndex,
+      shiftMs: randomInt(this.random, 280, 420),
+    };
+  }
+
+  private pickDifferentSymbolIndex(excludedIndex: number): number {
+    let selected = excludedIndex;
+    while (selected === excludedIndex) {
+      selected = randomInt(this.random, 0, SYMBOLS.length - 1);
+    }
+    return selected;
   }
 }

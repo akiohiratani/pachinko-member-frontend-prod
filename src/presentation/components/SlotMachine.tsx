@@ -16,6 +16,9 @@ type SlotMachineProps = {
   reelDelayMs: number;
   easing: string;
   reachExtraDelayMs: number;
+  reachFakeoutEnabled: boolean;
+  reachFakeoutIndex: number;
+  reachFakeoutShiftMs: number;
   reelWidth: number;
   itemHeight: number;
   gap: number;
@@ -71,6 +74,9 @@ export function SlotMachine({
   reelDelayMs,
   easing,
   reachExtraDelayMs,
+  reachFakeoutEnabled,
+  reachFakeoutIndex,
+  reachFakeoutShiftMs,
   reelWidth,
   itemHeight,
   gap,
@@ -217,6 +223,7 @@ export function SlotMachine({
             // 最終リールはリーチ演出分だけ停止を遅らせる。リーチでない場合は 0ms が加算される。
             const reachDelay =
               orderPosition === STOP_ORDER.length - 1 ? reachExtraDelayMs : 0;
+            const isLastReel = orderPosition === STOP_ORDER.length - 1;
             const spinMs =
               baseSpinMs + reelDelayMs * sequentialPosition + reachDelay;
 
@@ -248,6 +255,10 @@ export function SlotMachine({
                   easing={easing}
                   spinning={spinning}
                   symbols={symbols}
+                  fakeStopIndex={
+                    isLastReel && reachFakeoutEnabled ? reachFakeoutIndex : undefined
+                  }
+                  fakeShiftMs={isLastReel ? reachFakeoutShiftMs : 0}
                   highlightColor={
                     spinning && highlightMode === "reach" ? reachBlinkColor : null
                   }
