@@ -35,7 +35,7 @@ export default function App() {
     spinBaseMs,
     reachExtraDelayMs,
     fakeMiddleStop,
-    fakeReachBlackout,
+    blackoutPhase,
     highlightMode,
     showWelcome,
     connectionError,
@@ -57,12 +57,18 @@ export default function App() {
         spinBaseMs={spinBaseMs}
         reachExtraDelayMs={reachExtraDelayMs}
         fakeMiddleStop={fakeMiddleStop}
-        fakeReachBlackout={fakeReachBlackout}
         highlightMode={highlightMode}
         onReachBlink={onReachBlink}
         onSpinComplete={onSpinComplete}
         animationsEnabled={animationsEnabled}
       />
+
+      {blackoutPhase !== "off" && (
+        <div
+          className={`slot-machine-blackout-overlay slot-machine-blackout-overlay--${blackoutPhase}`}
+          aria-hidden="true"
+        />
+      )}
 
       {highlightMode === "win" && (
         <>
