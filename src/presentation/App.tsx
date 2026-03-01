@@ -38,6 +38,10 @@ export default function App() {
     highlightMode,
     showWelcome,
     connectionError,
+    symbolMorphToken,
+    symbolMorphFromIndex,
+    symbolMorphToIndex,
+    symbolMorphDurationMs,
     onReachBlink,
     onSpinComplete,
     onWelcomeTap,
@@ -56,6 +60,10 @@ export default function App() {
         spinBaseMs={spinBaseMs}
         reachExtraDelayMs={reachExtraDelayMs}
         highlightMode={highlightMode}
+        symbolMorphToken={symbolMorphToken}
+        symbolMorphFromIndex={symbolMorphFromIndex}
+        symbolMorphToIndex={symbolMorphToIndex}
+        symbolMorphDurationMs={symbolMorphDurationMs}
         onReachBlink={onReachBlink}
         onSpinComplete={onSpinComplete}
         animationsEnabled={animationsEnabled}

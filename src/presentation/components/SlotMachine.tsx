@@ -22,6 +22,10 @@ type SlotMachineProps = {
   containerMax: number;
   symbols: readonly SymbolDef[];
   highlightMode: "none" | "reach" | "win";
+  symbolMorphToken: number;
+  symbolMorphFromIndex: number | null;
+  symbolMorphToIndex: number | null;
+  symbolMorphDurationMs: number;
   onReachBlink?: () => void;
   onSpinComplete?: () => void;
   machineScale?: number;
@@ -77,6 +81,10 @@ export function SlotMachine({
   containerMax,
   symbols,
   highlightMode,
+  symbolMorphToken,
+  symbolMorphFromIndex,
+  symbolMorphToIndex,
+  symbolMorphDurationMs,
   onReachBlink,
   onSpinComplete,
   machineScale = 1,
@@ -252,6 +260,10 @@ export function SlotMachine({
                   highlightColor={
                     spinning && highlightMode === "reach" ? reachBlinkColor : null
                   }
+                  symbolMorphToken={symbolMorphToken}
+                  symbolMorphFromIndex={symbolMorphFromIndex}
+                  symbolMorphToIndex={symbolMorphToIndex}
+                  symbolMorphDurationMs={symbolMorphDurationMs}
                   spinToken={spinToken}
                   onSettled={(token) => handleReelSettled(reelIndex, token)}
                 />

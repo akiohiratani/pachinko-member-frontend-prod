@@ -16,6 +16,10 @@ type SlotReelProps = {
   spinning: boolean;
   symbols: readonly SymbolDef[];
   highlightColor: string | null;
+  symbolMorphToken: number;
+  symbolMorphFromIndex: number | null;
+  symbolMorphToIndex: number | null;
+  symbolMorphDurationMs: number;
   spinToken: number;
   onSettled?: (token: number) => void;
 };
@@ -31,6 +35,10 @@ export function SlotReel({
   spinning,
   symbols,
   highlightColor,
+  symbolMorphToken,
+  symbolMorphFromIndex,
+  symbolMorphToIndex,
+  symbolMorphDurationMs,
   spinToken,
   onSettled,
 }: SlotReelProps) {
@@ -50,6 +58,39 @@ export function SlotReel({
   const [hasStarted, setHasStarted] = React.useState(false);
   const [displayTargetIndex, setDisplayTargetIndex] = React.useState(targetIndex);
   const reportedTokenRef = React.useRef<number | null>(null);
+
+  const [symbolMorphActive, setSymbolMorphActive] = React.useState(false);
+  const symbolMorphClearTimerRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    if (symbolMorphClearTimerRef.current !== null) {
+      window.clearTimeout(symbolMorphClearTimerRef.current);
+      symbolMorphClearTimerRef.current = null;
+    }
+
+    const canMorph =
+      symbolMorphFromIndex !== null &&
+      symbolMorphToIndex !== null &&
+      symbolMorphDurationMs > 0;
+
+    if (!canMorph) {
+      setSymbolMorphActive(false);
+      return;
+    }
+
+    setSymbolMorphActive(true);
+    symbolMorphClearTimerRef.current = window.setTimeout(() => {
+      symbolMorphClearTimerRef.current = null;
+      setSymbolMorphActive(false);
+    }, symbolMorphDurationMs);
+
+    return () => {
+      if (symbolMorphClearTimerRef.current !== null) {
+        window.clearTimeout(symbolMorphClearTimerRef.current);
+        symbolMorphClearTimerRef.current = null;
+      }
+    };
+  }, [symbolMorphDurationMs, symbolMorphFromIndex, symbolMorphToIndex, symbolMorphToken]);
 
   React.useEffect(() => {
     if (!spinning) {
@@ -143,6 +184,28 @@ export function SlotReel({
           </div>
         ))}
       </div>
+      {symbolMorphActive && symbolMorphFromIndex !== null && symbolMorphToIndex !== null && (
+        <div
+          className="slot-reel-symbol-morph"
+          style={{
+            animationDuration: `${symbolMorphDurationMs}ms`,
+          }}
+          aria-hidden="true"
+        >
+          <img
+            className="slot-reel-symbol-morph__from"
+            src={symbols[symbolMorphFromIndex]?.src}
+            alt=""
+            draggable={false}
+          />
+          <img
+            className="slot-reel-symbol-morph__to"
+            src={symbols[symbolMorphToIndex]?.src}
+            alt=""
+            draggable={false}
+          />
+        </div>
+      )}
     </div>
   );
 }

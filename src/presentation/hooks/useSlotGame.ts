@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SLOT_MACHINE_CONFIG } from "../../domain/slotMachine";
+import { SYMBOLS } from "../../domain/symbols";
 import { SoundEffects } from "../../infrastructure/audio/SoundEffects";
 import { SlotWebSocketGateway } from "../../infrastructure/slotWebSocketGateway";
 import { SlotMachineManager, type RoundStartPayload } from "../../usecases/slotMachineManager";
@@ -17,6 +18,10 @@ type SlotGameState = {
   highlightMode: HighlightMode;
   showWelcome: boolean;
   connectionError: string | null;
+  symbolMorphToken: number;
+  symbolMorphFromIndex: number | null;
+  symbolMorphToIndex: number | null;
+  symbolMorphDurationMs: number;
 };
 
 type SlotGameHandlers = {
@@ -42,6 +47,11 @@ export function useSlotGame(
   const [blackoutPhase, setBlackoutPhase] = useState<BlackoutPhase>("off");
   const [showWelcome, setShowWelcome] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const reelCount = slotManager.reelCount;
+  const [symbolMorphToken, setSymbolMorphToken] = useState(0);
+  const [symbolMorphFromIndex, setSymbolMorphFromIndex] = useState<number | null>(null);
+  const [symbolMorphToIndex, setSymbolMorphToIndex] = useState<number | null>(null);
+  const [symbolMorphDurationMs, setSymbolMorphDurationMs] = useState(0);
 
   const soundEffectsRef = useRef<SoundEffects | null>(null);
   const websocketRef = useRef<SlotWebSocketGateway | null>(null);
@@ -50,6 +60,12 @@ export function useSlotGame(
   const spinCompletionResolverRef = useRef<(() => void) | null>(null);
   const blackoutTimersRef = useRef<number[]>([]);
   const plannedBlackoutDurationRef = useRef<number | null>(null);
+  const targetIndexesRef = useRef<number[]>(targetIndexes);
+  const symbolMorphTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    targetIndexesRef.current = targetIndexes;
+  }, [targetIndexes]);
 
   useEffect(() => {
     slotManager.preloadSymbols();
@@ -81,6 +97,10 @@ export function useSlotGame(
     return () => {
       blackoutTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
       blackoutTimersRef.current = [];
+      if (symbolMorphTimerRef.current !== null) {
+        window.clearTimeout(symbolMorphTimerRef.current);
+        symbolMorphTimerRef.current = null;
+      }
       plannedBlackoutDurationRef.current = null;
       roundControllerRef.current?.dispose();
       roundControllerRef.current = null;
@@ -151,6 +171,10 @@ export function useSlotGame(
         payload,
         {
           onPrepare: (roundPlan) => {
+            if (symbolMorphTimerRef.current !== null) {
+              window.clearTimeout(symbolMorphTimerRef.current);
+              symbolMorphTimerRef.current = null;
+            }
             setSpinBaseMs(roundPlan.baseSpinDurationMs);
             setReachExtraDelayMs(roundPlan.reachExtraDelayMs);
             plannedBlackoutDurationRef.current = roundPlan.fakeReachBlackout?.durationMs ?? null;
@@ -158,6 +182,9 @@ export function useSlotGame(
             setBlackoutPhase("off");
             setSpinning(false);
             setHighlightMode("none");
+            setSymbolMorphFromIndex(null);
+            setSymbolMorphToIndex(null);
+            setSymbolMorphDurationMs(0);
           },
           onSpin: (indexes) => {
             setTargetIndexes(indexes);
@@ -173,15 +200,45 @@ export function useSlotGame(
             setHighlightMode("none");
           },
           onWin: () => {
-            setHighlightMode("win");
-            disconnectSilently();
+            const currentIndexes = targetIndexesRef.current;
+            const firstIndex = currentIndexes[0] ?? null;
+            const canMorph =
+              firstIndex !== null &&
+              currentIndexes.length >= 3 &&
+              currentIndexes.every((index) => index === firstIndex) &&
+              SYMBOLS.length > 1;
+
+            if (!canMorph || Math.random() >= 0.25) {
+              setHighlightMode("win");
+              disconnectSilently();
+              return;
+            }
+
+            const morphDurationMs = 1500;
+            const alternativeOffset = Math.floor(Math.random() * (SYMBOLS.length - 1)) + 1;
+            const changedIndex = (firstIndex + alternativeOffset) % SYMBOLS.length;
+
+            setSymbolMorphFromIndex(firstIndex);
+            setSymbolMorphToIndex(changedIndex);
+            setSymbolMorphDurationMs(morphDurationMs);
+            setSymbolMorphToken((token) => token + 1);
+
+            symbolMorphTimerRef.current = window.setTimeout(() => {
+              symbolMorphTimerRef.current = null;
+              setTargetIndexes(Array(reelCount).fill(changedIndex));
+              setSymbolMorphFromIndex(null);
+              setSymbolMorphToIndex(null);
+              setSymbolMorphDurationMs(0);
+              setHighlightMode("win");
+              disconnectSilently();
+            }, morphDurationMs);
           },
           waitForSpinComplete: awaitSpinCompletion,
         },
         soundEffectsRef.current,
       );
     },
-    [clearBlackoutTimers, disconnectSilently, awaitSpinCompletion, scheduleBlackout],
+    [clearBlackoutTimers, disconnectSilently, awaitSpinCompletion, reelCount, scheduleBlackout],
   );
 
   const connectWebSocket = useCallback(() => {
@@ -236,6 +293,10 @@ export function useSlotGame(
       highlightMode,
       showWelcome,
       connectionError,
+      symbolMorphToken,
+      symbolMorphFromIndex,
+      symbolMorphToIndex,
+      symbolMorphDurationMs,
       onReachBlink,
       onSpinComplete: notifySpinComplete,
       onWelcomeTap,
@@ -250,6 +311,10 @@ export function useSlotGame(
       highlightMode,
       showWelcome,
       connectionError,
+      symbolMorphToken,
+      symbolMorphFromIndex,
+      symbolMorphToIndex,
+      symbolMorphDurationMs,
       onReachBlink,
       notifySpinComplete,
       onWelcomeTap,

@@ -13,6 +13,10 @@ type SlotMachineSurfaceProps = {
   spinBaseMs: number;
   reachExtraDelayMs: number;
   highlightMode: "none" | "reach" | "win";
+  symbolMorphToken: number;
+  symbolMorphFromIndex: number | null;
+  symbolMorphToIndex: number | null;
+  symbolMorphDurationMs: number;
   onReachBlink?: () => void;
   onSpinComplete?: () => void;
   animationsEnabled?: boolean;
@@ -26,6 +30,10 @@ export function SlotMachineSurface({
   spinBaseMs,
   reachExtraDelayMs,
   highlightMode,
+  symbolMorphToken,
+  symbolMorphFromIndex,
+  symbolMorphToIndex,
+  symbolMorphDurationMs,
   onReachBlink,
   onSpinComplete,
   animationsEnabled = true,
@@ -61,6 +69,10 @@ export function SlotMachineSurface({
         containerMax={machineMaxWidth}
         symbols={SYMBOLS}
         highlightMode={highlightMode}
+        symbolMorphToken={symbolMorphToken}
+        symbolMorphFromIndex={symbolMorphFromIndex}
+        symbolMorphToIndex={symbolMorphToIndex}
+        symbolMorphDurationMs={symbolMorphDurationMs}
         onReachBlink={onReachBlink}
         onSpinComplete={onSpinComplete}
         machineScale={machineScale}
