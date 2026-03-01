@@ -34,6 +34,9 @@ export default function App() {
     targetIndexes,
     spinBaseMs,
     reachExtraDelayMs,
+    reachFakeoutEnabled,
+    reachFakeoutIndex,
+    reachFakeoutShiftMs,
     highlightMode,
     showWelcome,
     connectionError,
@@ -54,6 +57,9 @@ export default function App() {
         targetIndexes={targetIndexes}
         spinBaseMs={spinBaseMs}
         reachExtraDelayMs={reachExtraDelayMs}
+        reachFakeoutEnabled={reachFakeoutEnabled}
+        reachFakeoutIndex={reachFakeoutIndex}
+        reachFakeoutShiftMs={reachFakeoutShiftMs}
         highlightMode={highlightMode}
         onReachBlink={onReachBlink}
         onSpinComplete={onSpinComplete}

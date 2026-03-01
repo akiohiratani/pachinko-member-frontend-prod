@@ -12,6 +12,9 @@ type SlotGameState = {
   targetIndexes: number[];
   spinBaseMs: number;
   reachExtraDelayMs: number;
+  reachFakeoutEnabled: boolean;
+  reachFakeoutIndex: number;
+  reachFakeoutShiftMs: number;
   highlightMode: HighlightMode;
   showWelcome: boolean;
   connectionError: string | null;
@@ -36,6 +39,9 @@ export function useSlotGame(
   );
   const [spinBaseMs, setSpinBaseMs] = useState<number>(SLOT_MACHINE_CONFIG.baseSpinMs);
   const [reachExtraDelayMs, setReachExtraDelayMs] = useState<number>(0);
+  const [reachFakeoutEnabled, setReachFakeoutEnabled] = useState(false);
+  const [reachFakeoutIndex, setReachFakeoutIndex] = useState(0);
+  const [reachFakeoutShiftMs, setReachFakeoutShiftMs] = useState(0);
   const [highlightMode, setHighlightMode] = useState<HighlightMode>("none");
   const [showWelcome, setShowWelcome] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -110,6 +116,9 @@ export function useSlotGame(
           onPrepare: (roundPlan) => {
             setSpinBaseMs(roundPlan.baseSpinDurationMs);
             setReachExtraDelayMs(roundPlan.reachExtraDelayMs);
+            setReachFakeoutEnabled(roundPlan.reachFakeout.enabled);
+            setReachFakeoutIndex(roundPlan.reachFakeout.fakeIndex);
+            setReachFakeoutShiftMs(roundPlan.reachFakeout.shiftMs);
             setSpinning(false);
             setHighlightMode("none");
           },
@@ -183,6 +192,9 @@ export function useSlotGame(
       targetIndexes,
       spinBaseMs,
       reachExtraDelayMs,
+      reachFakeoutEnabled,
+      reachFakeoutIndex,
+      reachFakeoutShiftMs,
       highlightMode,
       showWelcome,
       connectionError,
@@ -196,6 +208,9 @@ export function useSlotGame(
       targetIndexes,
       spinBaseMs,
       reachExtraDelayMs,
+      reachFakeoutEnabled,
+      reachFakeoutIndex,
+      reachFakeoutShiftMs,
       highlightMode,
       showWelcome,
       connectionError,
