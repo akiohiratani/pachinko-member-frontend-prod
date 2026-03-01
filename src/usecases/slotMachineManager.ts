@@ -39,6 +39,7 @@ export type RoundPlan = {
 const FAKE_SHIFT_DELAY_MIN_MS = 300;
 const FAKE_SHIFT_DELAY_MAX_MS = 500;
 const FAKE_SHIFT_DURATION_MS = 220;
+const FAKE_MIDDLE_STOP_PROBABILITY = 0.45;
 
 // 暗転する確立
 const FAKE_REACH_BLACKOUT_PROBABILITY = 1 / 1.5;
@@ -157,7 +158,7 @@ export class SlotMachineManager {
   }
 
   /**
-   * リーチ中の当選時は必ず、中央リールにフェイク停止演出を付与する。
+   * リーチ中の当選時に、一定確率で中央リールへフェイク停止演出を付与する。
    * 抽選結果自体（targetIndexes）は変更せず、演出情報だけを返す。
    */
   private buildFakeMiddleStopPlan(
@@ -167,6 +168,7 @@ export class SlotMachineManager {
   ): RoundPlan["fakeMiddleStop"] {
     if (!isWin || !isReach) return null;
     if (targetIndexes.length < 3) return null;
+    if (this.random.float() >= FAKE_MIDDLE_STOP_PROBABILITY) return null;
 
     const winIndex = targetIndexes[1] ?? targetIndexes[0] ?? 0;
     const fakeIndex = this.createDifferentSymbolIndex(winIndex);
