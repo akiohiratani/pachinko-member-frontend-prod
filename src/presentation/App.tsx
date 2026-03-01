@@ -16,6 +16,9 @@ import "./App.css";
 const LIGHTNING_VIEWBOX_WIDTH = 1000;
 const LIGHTNING_VIEWBOX_HEIGHT = 1000;
 const LIGHTNING_SEGMENT_COUNT = 12;
+const RED_THEME_PROBABILITY = 0.2;
+
+type BlackoutTheme = "black" | "red";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -56,6 +59,7 @@ export default function App() {
 
   const websocketUrl = useWebsocketUrl(roomId);
   const [lightningSeed, setLightningSeed] = useState(1);
+  const [blackoutTheme, setBlackoutTheme] = useState<BlackoutTheme>("black");
 
   const {
     spinning,
@@ -80,6 +84,7 @@ export default function App() {
   useEffect(() => {
     if (blackoutPhase !== "closed") return;
     setLightningSeed((value) => value + 1);
+    setBlackoutTheme(Math.random() < RED_THEME_PROBABILITY ? "red" : "black");
   }, [blackoutPhase]);
 
   const lightningPaths = useMemo(
@@ -110,7 +115,7 @@ export default function App() {
 
       {blackoutPhase !== "off" && (
         <div
-          className={`slot-machine-blackout-overlay slot-machine-blackout-overlay--${blackoutPhase}`}
+          className={`slot-machine-blackout-overlay slot-machine-blackout-overlay--${blackoutPhase} slot-machine-blackout-overlay--theme-${blackoutTheme}`}
           aria-hidden="true"
         >
           <svg

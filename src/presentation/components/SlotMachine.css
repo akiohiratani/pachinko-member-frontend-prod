@@ -323,12 +323,21 @@
 }
 
 .slot-machine-blackout-overlay {
+  --slot-machine-blackout-color: #000;
+  --slot-machine-lightning-color: #fff;
+  --slot-machine-lightning-shadow: rgba(255, 255, 255, 0.85);
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: #000;
+  background: var(--slot-machine-blackout-color);
   overflow: hidden;
   z-index: 999;
+}
+
+.slot-machine-blackout-overlay--theme-red {
+  --slot-machine-blackout-color: #2f0000;
+  --slot-machine-lightning-color: #ffe066;
+  --slot-machine-lightning-shadow: rgba(255, 214, 64, 0.92);
 }
 
 .slot-machine-blackout-overlay__lightning {
@@ -341,12 +350,12 @@
 
 .slot-machine-blackout-overlay__lightning-path {
   fill: none;
-  stroke: #fff;
+  stroke: var(--slot-machine-lightning-color);
   stroke-width: clamp(2.5px, 0.5vw, 5px);
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.85));
+  filter: drop-shadow(0 0 8px var(--slot-machine-lightning-shadow));
   stroke-dasharray: 220 1200;
   stroke-dashoffset: 1220;
 }
