@@ -323,11 +323,97 @@
 }
 
 .slot-machine-blackout-overlay {
+  --slot-machine-blackout-color: #000;
+  --slot-machine-lightning-color: #fff;
+  --slot-machine-lightning-shadow: rgba(255, 255, 255, 0.85);
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: #000;
+  background: var(--slot-machine-blackout-color);
+  overflow: hidden;
   z-index: 999;
+}
+
+.slot-machine-blackout-overlay--theme-red {
+  --slot-machine-blackout-color: #2f0000;
+  --slot-machine-lightning-color: #ffe066;
+  --slot-machine-lightning-shadow: rgba(255, 214, 64, 0.92);
+}
+
+.slot-machine-blackout-overlay__lightning {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.slot-machine-blackout-overlay__lightning-path {
+  fill: none;
+  stroke: var(--slot-machine-lightning-color);
+  stroke-width: clamp(2.5px, 0.5vw, 5px);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  filter: drop-shadow(0 0 8px var(--slot-machine-lightning-shadow));
+  stroke-dasharray: 220 1200;
+  stroke-dashoffset: 1220;
+}
+
+.slot-machine-blackout-overlay__lightning-path--main {
+  animation: slot-machine-blackout-lightning-zigzag-main 1.25s linear infinite;
+}
+
+.slot-machine-blackout-overlay__lightning-path--sub {
+  animation: slot-machine-blackout-lightning-zigzag-sub 1.25s linear infinite;
+}
+
+@keyframes slot-machine-blackout-lightning-zigzag-main {
+  0%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 1220;
+  }
+  5% {
+    opacity: 0;
+    stroke-dashoffset: 1220;
+  }
+  9% {
+    opacity: 0.95;
+    stroke-dashoffset: 860;
+  }
+  13% {
+    opacity: 0.95;
+    stroke-dashoffset: 520;
+  }
+  17% {
+    opacity: 0;
+    stroke-dashoffset: 80;
+  }
+}
+
+@keyframes slot-machine-blackout-lightning-zigzag-sub {
+  0%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 1220;
+  }
+  31% {
+    opacity: 0;
+    stroke-dashoffset: 1220;
+  }
+  35% {
+    opacity: 0.9;
+    stroke-dashoffset: 920;
+  }
+  39% {
+    opacity: 0.9;
+    stroke-dashoffset: 530;
+  }
+  44% {
+    opacity: 0;
+    stroke-dashoffset: 90;
+  }
 }
 
 .slot-machine-blackout-overlay--closing {
@@ -336,6 +422,10 @@
 }
 
 .slot-machine-blackout-overlay--closed {
+  opacity: 1;
+}
+
+.slot-machine-blackout-overlay--closed .slot-machine-blackout-overlay__lightning {
   opacity: 1;
 }
 
