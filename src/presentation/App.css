@@ -10,9 +10,9 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  background: #0b1220;
+  background: #e0f2fe;
   overflow: hidden;
-  color: #e2e8f0;
+  color: #0f172a;
   padding-top: max(clamp(24px, 10vw, 64px), env(safe-area-inset-top));
   padding-bottom: max(clamp(24px, 10vw, 64px), env(safe-area-inset-bottom));
   padding-left: max(clamp(16px, 7vw, 48px), env(safe-area-inset-left));
