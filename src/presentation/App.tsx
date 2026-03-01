@@ -71,7 +71,9 @@ export default function App() {
         <div
           className={`slot-machine-blackout-overlay slot-machine-blackout-overlay--${blackoutPhase}`}
           aria-hidden="true"
-        />
+        >
+          <div className="slot-machine-blackout-overlay__lightning" />
+        </div>
       )}
 
       {highlightMode === "win" && (
