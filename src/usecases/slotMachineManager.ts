@@ -29,7 +29,7 @@ export type RoundPlan = {
 
 // リーチ中に暗転する確率（35%）
 const FAKE_REACH_BLACKOUT_PROBABILITY = 0.35;
-const FAKE_REACH_BLACKOUT_DURATION_MS = 5500;
+const FAKE_REACH_BLACKOUT_DURATION_MS = 7000;
 
 /**
  * ドメイン設定とインフラを束ね、1 ラウンド分のスロット挙動を計画するユースケース。
