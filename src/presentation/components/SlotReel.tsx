@@ -17,6 +17,7 @@ type SlotReelProps = {
   } | null;
   initialIndex?: number;
   spinMs: number;
+  stopDelayMs?: number;
   easing: string;
   spinning: boolean;
   symbols: readonly SymbolDef[];
@@ -35,6 +36,7 @@ export function SlotReel({
   fakeStop,
   initialIndex: initialIndexProp,
   spinMs,
+  stopDelayMs = 0,
   easing,
   spinning,
   symbols,
@@ -58,6 +60,7 @@ export function SlotReel({
   const [hasStarted, setHasStarted] = React.useState(false);
   const [displayTargetIndex, setDisplayTargetIndex] = React.useState(targetIndex);
   const [activeTransitionMs, setActiveTransitionMs] = React.useState(spinMs);
+  const [activeTransitionDelayMs, setActiveTransitionDelayMs] = React.useState(stopDelayMs);
   const phaseRef = React.useRef<ReelPhase>("normal");
   const reportedTokenRef = React.useRef<number | null>(null);
   const shiftTimerRef = React.useRef<ReturnType<typeof window.setTimeout> | null>(null);
@@ -76,6 +79,7 @@ export function SlotReel({
 
     setHasStarted(true);
     setActiveTransitionMs(spinMs);
+    setActiveTransitionDelayMs(stopDelayMs);
 
     // リーチ当選時の一部でのみ、中央リールを「フェイク停止 → 本停止」の 2 段階にする。
     if (!fakeStop || fakeStop.fakeIndex === targetIndex) {
@@ -89,9 +93,10 @@ export function SlotReel({
     shiftTimerRef.current = window.setTimeout(() => {
       phaseRef.current = "final";
       setActiveTransitionMs(fakeStop.shiftDurationMs);
+      setActiveTransitionDelayMs(0);
       setDisplayTargetIndex(targetIndex);
       shiftTimerRef.current = null;
-    }, spinMs + fakeStop.shiftDelayMs);
+    }, stopDelayMs + spinMs + fakeStop.shiftDelayMs);
 
     return () => {
       if (shiftTimerRef.current !== null) {
@@ -99,7 +104,7 @@ export function SlotReel({
         shiftTimerRef.current = null;
       }
     };
-  }, [fakeStop, spinMs, spinning, targetIndex]);
+  }, [fakeStop, spinMs, spinning, stopDelayMs, targetIndex]);
 
   React.useEffect(() => {
     if (spinning) {
@@ -116,6 +121,7 @@ export function SlotReel({
   const trackStyle: React.CSSProperties = {
     transitionProperty: "transform",
     transitionDuration: spinning ? `${activeTransitionMs}ms` : "0ms",
+    transitionDelay: spinning ? `${activeTransitionDelayMs}ms` : "0ms",
     transitionTimingFunction: spinning ? easing : "linear",
     transform: `translate3d(0, ${spinning ? finalOffset : restingOffset}px, 0)`,
     willChange: spinning ? "transform" : undefined,

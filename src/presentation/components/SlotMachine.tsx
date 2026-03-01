@@ -224,8 +224,8 @@ export function SlotMachine({
             // 最終リールはリーチ演出分だけ停止を遅らせる。リーチでない場合は 0ms が加算される。
             const reachDelay =
               orderPosition === STOP_ORDER.length - 1 ? reachExtraDelayMs : 0;
-            const spinMs =
-              baseSpinMs + reelDelayMs * sequentialPosition + reachDelay;
+            const spinMs = baseSpinMs;
+            const stopDelayMs = reelDelayMs * sequentialPosition + reachDelay;
 
             const stageClassName = [
               stageBaseClass,
@@ -253,6 +253,7 @@ export function SlotMachine({
                   fakeStop={reelIndex === 1 ? fakeMiddleStop : null}
                   initialIndex={initialIndexes[reelIndex] ?? 0}
                   spinMs={spinMs}
+                  stopDelayMs={stopDelayMs}
                   easing={easing}
                   spinning={spinning}
                   symbols={symbols}
