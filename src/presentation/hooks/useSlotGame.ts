@@ -18,6 +18,11 @@ type SlotGameState = {
     shiftDelayMs: number;
     shiftDurationMs: number;
   } | null;
+  fakeWinShift: {
+    fakeIndex: number;
+    shiftStartAfterMs: number;
+    shiftDurationMs: number;
+  } | null;
   blackoutPhase: BlackoutPhase;
   highlightMode: HighlightMode;
   showWelcome: boolean;
@@ -44,6 +49,7 @@ export function useSlotGame(
   const [spinBaseMs, setSpinBaseMs] = useState<number>(SLOT_MACHINE_CONFIG.baseSpinMs);
   const [reachExtraDelayMs, setReachExtraDelayMs] = useState<number>(0);
   const [fakeMiddleStop, setFakeMiddleStop] = useState<SlotGameState["fakeMiddleStop"]>(null);
+  const [fakeWinShift, setFakeWinShift] = useState<SlotGameState["fakeWinShift"]>(null);
   const [highlightMode, setHighlightMode] = useState<HighlightMode>("none");
   const [blackoutPhase, setBlackoutPhase] = useState<BlackoutPhase>("off");
   const [showWelcome, setShowWelcome] = useState(true);
@@ -160,6 +166,7 @@ export function useSlotGame(
             setSpinBaseMs(roundPlan.baseSpinDurationMs);
             setReachExtraDelayMs(roundPlan.reachExtraDelayMs);
             setFakeMiddleStop(roundPlan.fakeMiddleStop);
+            setFakeWinShift(roundPlan.fakeWinShift);
             plannedBlackoutDurationRef.current = roundPlan.fakeReachBlackout?.durationMs ?? null;
             clearBlackoutTimers();
             setBlackoutPhase("off");
@@ -240,6 +247,7 @@ export function useSlotGame(
       spinBaseMs,
       reachExtraDelayMs,
       fakeMiddleStop,
+      fakeWinShift,
       blackoutPhase,
       highlightMode,
       showWelcome,
@@ -255,6 +263,7 @@ export function useSlotGame(
       spinBaseMs,
       reachExtraDelayMs,
       fakeMiddleStop,
+      fakeWinShift,
       blackoutPhase,
       highlightMode,
       showWelcome,

@@ -34,6 +34,15 @@ export type RoundPlan = {
   fakeReachBlackout: {
     durationMs: number;
   } | null;
+  /**
+   * 当選時に「一度別図柄で揃ったように見せてから本当たりへズラす」フェイント演出。
+   * null の場合は通常どおり最終図柄で停止する。
+   */
+  fakeWinShift: {
+    fakeIndex: number;
+    shiftStartAfterMs: number;
+    shiftDurationMs: number;
+  } | null;
 };
 
 // ズレて揃う確立
@@ -41,6 +50,8 @@ const FAKE_REACH_STOP_PROBABILITY = 1 / 3.5;
 const FAKE_SHIFT_DELAY_MIN_MS = 300;
 const FAKE_SHIFT_DELAY_MAX_MS = 500;
 const FAKE_SHIFT_DURATION_MS = 220;
+const FAKE_WIN_SHIFT_PROBABILITY = 1 / 5;
+const FAKE_WIN_SETTLE_HOLD_MS = 450;
 
 // 暗転する確立
 const FAKE_REACH_BLACKOUT_PROBABILITY = 1 / 1.5;
@@ -89,6 +100,7 @@ export class SlotMachineManager {
       isWin && this.random.float() < SLOT_MACHINE_CONFIG.winStartSoundProbability ? "win" : "spin";
     const fakeMiddleStop = this.buildFakeMiddleStopPlan(targetIndexes, isWin, isReach);
     const fakeReachBlackout = this.buildFakeReachBlackoutPlan(fakeMiddleStop);
+    const fakeWinShift = this.buildFakeWinShiftPlan(targetIndexes, isWin, baseSpinDurationMs + sequentialDelayTotal + reachExtraDelayMs);
 
     return {
       targetIndexes,
@@ -100,6 +112,7 @@ export class SlotMachineManager {
       reachExtraDelayMs,
       fakeMiddleStop,
       fakeReachBlackout,
+      fakeWinShift,
     };
   }
 
@@ -204,6 +217,25 @@ export class SlotMachineManager {
 
     return {
       durationMs: FAKE_REACH_BLACKOUT_DURATION_MS,
+    };
+  }
+
+  private buildFakeWinShiftPlan(
+    targetIndexes: number[],
+    isWin: boolean,
+    totalSpinMs: number,
+  ): RoundPlan["fakeWinShift"] {
+    if (!isWin) return null;
+    if (targetIndexes.length === 0) return null;
+    if (this.random.float() >= FAKE_WIN_SHIFT_PROBABILITY) return null;
+
+    const winIndex = targetIndexes[0] ?? 0;
+    const fakeIndex = this.createDifferentSymbolIndex(winIndex);
+
+    return {
+      fakeIndex,
+      shiftStartAfterMs: totalSpinMs + FAKE_WIN_SETTLE_HOLD_MS,
+      shiftDurationMs: FAKE_SHIFT_DURATION_MS,
     };
   }
 }
