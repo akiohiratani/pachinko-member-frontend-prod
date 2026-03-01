@@ -33,7 +33,7 @@ export type RoundPlan = {
   } | null;
 };
 
-const FAKE_REACH_STOP_PROBABILITY = 1 / 3;
+const FAKE_REACH_STOP_PROBABILITY = 1 / 4;
 const FAKE_SHIFT_DELAY_MIN_MS = 300;
 const FAKE_SHIFT_DELAY_MAX_MS = 500;
 const FAKE_SHIFT_DURATION_MS = 220;
