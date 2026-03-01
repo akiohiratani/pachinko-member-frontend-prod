@@ -157,12 +157,24 @@ export class SlotMachineManager {
     const centerIndex = 1;
     const hitIndex = targetIndexes[centerIndex] ?? 0;
     // 「1」が当たり図柄の場合は「5」で一旦止める演出を優先する。
-    const fakeIndex = hitIndex === 0 ? SYMBOLS.length - 1 : hitIndex - 1;
+    // それ以外の当たり図柄でも、必ず別図柄へフェイク停止させる。
+    const fakeIndex =
+      hitIndex === 0
+        ? SYMBOLS.length - 1
+        : this.pickDifferentSymbolIndex(hitIndex);
 
     return {
       enabled: true,
       fakeIndex,
       shiftMs: randomInt(this.random, 280, 420),
     };
+  }
+
+  private pickDifferentSymbolIndex(excludedIndex: number): number {
+    let selected = excludedIndex;
+    while (selected === excludedIndex) {
+      selected = randomInt(this.random, 0, SYMBOLS.length - 1);
+    }
+    return selected;
   }
 }
