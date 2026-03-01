@@ -33,7 +33,7 @@ type SlotGameHandlers = {
 
 type SlotGameHook = SlotGameState & SlotGameHandlers;
 
-const WIN_SYMBOL_SHIFT_PROBABILITY = 0.25;
+const WIN_SYMBOL_SHIFT_PROBABILITY = 0.15;
 const WIN_SYMBOL_SHIFT_MS = 180;
 
 export function useSlotGame(
