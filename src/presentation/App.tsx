@@ -37,6 +37,7 @@ export default function App() {
     fakeMiddleStop,
     blackoutPhase,
     highlightMode,
+    symbolChangeDurationMs,
     showWelcome,
     connectionError,
     onReachBlink,
@@ -58,6 +59,7 @@ export default function App() {
         reachExtraDelayMs={reachExtraDelayMs}
         fakeMiddleStop={fakeMiddleStop}
         highlightMode={highlightMode}
+        symbolChangeDurationMs={symbolChangeDurationMs}
         onReachBlink={onReachBlink}
         onSpinComplete={onSpinComplete}
         animationsEnabled={animationsEnabled}

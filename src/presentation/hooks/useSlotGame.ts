@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { randomInt, defaultRandom } from "../../domain/random";
 import { SLOT_MACHINE_CONFIG } from "../../domain/slotMachine";
+import { SYMBOLS } from "../../domain/symbols";
 import { SoundEffects } from "../../infrastructure/audio/SoundEffects";
 import { SlotWebSocketGateway } from "../../infrastructure/slotWebSocketGateway";
 import { SlotMachineManager, type RoundStartPayload } from "../../usecases/slotMachineManager";
@@ -20,6 +22,7 @@ type SlotGameState = {
   } | null;
   blackoutPhase: BlackoutPhase;
   highlightMode: HighlightMode;
+  symbolChangeDurationMs: number | null;
   showWelcome: boolean;
   connectionError: string | null;
 };
@@ -33,6 +36,9 @@ type SlotGameHandlers = {
 
 type SlotGameHook = SlotGameState & SlotGameHandlers;
 
+const WIN_SYMBOL_CHANGE_PROBABILITY = 0.25;
+const WIN_SYMBOL_CHANGE_DURATION_MS = 1000;
+
 export function useSlotGame(
   slotManager: SlotMachineManager,
   websocketUrl: string,
@@ -45,6 +51,7 @@ export function useSlotGame(
   const [reachExtraDelayMs, setReachExtraDelayMs] = useState<number>(0);
   const [fakeMiddleStop, setFakeMiddleStop] = useState<SlotGameState["fakeMiddleStop"]>(null);
   const [highlightMode, setHighlightMode] = useState<HighlightMode>("none");
+  const [symbolChangeDurationMs, setSymbolChangeDurationMs] = useState<number | null>(null);
   const [blackoutPhase, setBlackoutPhase] = useState<BlackoutPhase>("off");
   const [showWelcome, setShowWelcome] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -56,6 +63,12 @@ export function useSlotGame(
   const spinCompletionResolverRef = useRef<(() => void) | null>(null);
   const blackoutTimersRef = useRef<number[]>([]);
   const plannedBlackoutDurationRef = useRef<number | null>(null);
+  const targetIndexesRef = useRef<number[]>(targetIndexes);
+  const winSymbolChangeTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    targetIndexesRef.current = targetIndexes;
+  }, [targetIndexes]);
 
   useEffect(() => {
     slotManager.preloadSymbols();
@@ -85,6 +98,10 @@ export function useSlotGame(
   useEffect(() => {
     roundControllerRef.current = new SlotRoundController(slotManager);
     return () => {
+      if (winSymbolChangeTimerRef.current !== null) {
+        window.clearTimeout(winSymbolChangeTimerRef.current);
+        winSymbolChangeTimerRef.current = null;
+      }
       blackoutTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
       blackoutTimersRef.current = [];
       plannedBlackoutDurationRef.current = null;
@@ -165,6 +182,11 @@ export function useSlotGame(
             setBlackoutPhase("off");
             setSpinning(false);
             setHighlightMode("none");
+            setSymbolChangeDurationMs(null);
+            if (winSymbolChangeTimerRef.current !== null) {
+              window.clearTimeout(winSymbolChangeTimerRef.current);
+              winSymbolChangeTimerRef.current = null;
+            }
           },
           onSpin: (indexes) => {
             setTargetIndexes(indexes);
@@ -180,8 +202,39 @@ export function useSlotGame(
             setHighlightMode("none");
           },
           onWin: () => {
-            setHighlightMode("win");
-            disconnectSilently();
+            const startWinHighlight = () => {
+              setHighlightMode("win");
+              disconnectSilently();
+            };
+
+            const currentIndexes = targetIndexesRef.current;
+            if (
+              currentIndexes.length === 0 ||
+              SYMBOLS.length <= 1 ||
+              defaultRandom.float() >= WIN_SYMBOL_CHANGE_PROBABILITY
+            ) {
+              startWinHighlight();
+              return;
+            }
+
+            const currentSymbolIndex = currentIndexes[0] ?? 0;
+            let changedSymbolIndex = currentSymbolIndex;
+            while (changedSymbolIndex === currentSymbolIndex) {
+              changedSymbolIndex = randomInt(defaultRandom, 0, SYMBOLS.length - 1);
+            }
+
+            setTargetIndexes(Array(currentIndexes.length).fill(changedSymbolIndex));
+            setSymbolChangeDurationMs(WIN_SYMBOL_CHANGE_DURATION_MS);
+
+            if (winSymbolChangeTimerRef.current !== null) {
+              window.clearTimeout(winSymbolChangeTimerRef.current);
+            }
+
+            winSymbolChangeTimerRef.current = window.setTimeout(() => {
+              setSymbolChangeDurationMs(null);
+              startWinHighlight();
+              winSymbolChangeTimerRef.current = null;
+            }, WIN_SYMBOL_CHANGE_DURATION_MS);
           },
           waitForSpinComplete: awaitSpinCompletion,
         },
@@ -242,6 +295,7 @@ export function useSlotGame(
       fakeMiddleStop,
       blackoutPhase,
       highlightMode,
+      symbolChangeDurationMs,
       showWelcome,
       connectionError,
       onReachBlink,
@@ -257,6 +311,7 @@ export function useSlotGame(
       fakeMiddleStop,
       blackoutPhase,
       highlightMode,
+      symbolChangeDurationMs,
       showWelcome,
       connectionError,
       onReachBlink,

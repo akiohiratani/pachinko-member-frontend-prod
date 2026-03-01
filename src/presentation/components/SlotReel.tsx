@@ -21,6 +21,7 @@ type SlotReelProps = {
   spinning: boolean;
   symbols: readonly SymbolDef[];
   highlightColor: string | null;
+  targetTransitionMs?: number | null;
   spinToken: number;
   onSettled?: (token: number) => void;
 };
@@ -39,6 +40,7 @@ export function SlotReel({
   spinning,
   symbols,
   highlightColor,
+  targetTransitionMs,
   spinToken,
   onSettled,
 }: SlotReelProps) {
@@ -75,7 +77,7 @@ export function SlotReel({
     }
 
     setHasStarted(true);
-    setActiveTransitionMs(spinMs);
+    setActiveTransitionMs(targetTransitionMs ?? spinMs);
 
     // リーチ当選時の一部でのみ、中央リールを「フェイク停止 → 本停止」の 2 段階にする。
     if (!fakeStop || fakeStop.fakeIndex === targetIndex) {
@@ -99,7 +101,7 @@ export function SlotReel({
         shiftTimerRef.current = null;
       }
     };
-  }, [fakeStop, spinMs, spinning, targetIndex]);
+  }, [fakeStop, spinMs, spinning, targetIndex, targetTransitionMs]);
 
   React.useEffect(() => {
     if (spinning) {
