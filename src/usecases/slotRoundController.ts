@@ -65,6 +65,10 @@ export type RoundLifecycleCallbacks = {
    */
   onReachEnd(): void;
   /**
+   * 勝利演出前に行う演出（図柄変化など）を通知する。
+   */
+  onBeforeWin?(): Promise<void> | void;
+  /**
    * 勝利演出の開始を通知する。
    */
   onWin(): void;
@@ -245,16 +249,15 @@ export class SlotRoundController {
         callbacks.onReachEnd();
       }
 
-      if (!effects) {
-        return;
-      }
-
       (async () => {
         try {
-          await effects.playWinAlert();
+          await callbacks.onBeforeWin?.();
+          if (effects) {
+            await effects.playWinAlert();
+          }
           callbacks.onWin();
         } catch {
-          /* 音声再生に失敗した場合は演出を開始しない。 */
+          /* 事前演出または音声再生に失敗した場合は演出を開始しない。 */
         }
       })();
     };

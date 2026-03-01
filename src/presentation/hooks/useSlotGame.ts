@@ -9,6 +9,9 @@ import { SlotRoundController } from "../../usecases/slotRoundController";
 type HighlightMode = "none" | "reach" | "win";
 type BlackoutPhase = "off" | "closing" | "closed" | "opening";
 
+const SYMBOL_MORPH_TRIGGER_PROBABILITY = 0.25;
+const SYMBOL_MORPH_DURATION_MS = 500;
+
 type SlotGameState = {
   spinning: boolean;
   targetIndexes: number[];
@@ -199,7 +202,7 @@ export function useSlotGame(
           onReachEnd: () => {
             setHighlightMode("none");
           },
-          onWin: () => {
+          onBeforeWin: async () => {
             const currentIndexes = targetIndexesRef.current;
             const firstIndex = currentIndexes[0] ?? null;
             const canMorph =
@@ -208,30 +211,32 @@ export function useSlotGame(
               currentIndexes.every((index) => index === firstIndex) &&
               SYMBOLS.length > 1;
 
-            if (!canMorph || Math.random() >= 0.25) {
-              setHighlightMode("win");
-              disconnectSilently();
+            if (!canMorph || Math.random() >= SYMBOL_MORPH_TRIGGER_PROBABILITY) {
               return;
             }
 
-            const morphDurationMs = 1500;
             const alternativeOffset = Math.floor(Math.random() * (SYMBOLS.length - 1)) + 1;
             const changedIndex = (firstIndex + alternativeOffset) % SYMBOLS.length;
 
             setSymbolMorphFromIndex(firstIndex);
             setSymbolMorphToIndex(changedIndex);
-            setSymbolMorphDurationMs(morphDurationMs);
+            setSymbolMorphDurationMs(SYMBOL_MORPH_DURATION_MS);
             setSymbolMorphToken((token) => token + 1);
 
-            symbolMorphTimerRef.current = window.setTimeout(() => {
-              symbolMorphTimerRef.current = null;
-              setTargetIndexes(Array(reelCount).fill(changedIndex));
-              setSymbolMorphFromIndex(null);
-              setSymbolMorphToIndex(null);
-              setSymbolMorphDurationMs(0);
-              setHighlightMode("win");
-              disconnectSilently();
-            }, morphDurationMs);
+            await new Promise<void>((resolve) => {
+              symbolMorphTimerRef.current = window.setTimeout(() => {
+                symbolMorphTimerRef.current = null;
+                setTargetIndexes(Array(reelCount).fill(changedIndex));
+                setSymbolMorphFromIndex(null);
+                setSymbolMorphToIndex(null);
+                setSymbolMorphDurationMs(0);
+                resolve();
+              }, SYMBOL_MORPH_DURATION_MS);
+            });
+          },
+          onWin: () => {
+            setHighlightMode("win");
+            disconnectSilently();
           },
           waitForSpinComplete: awaitSpinCompletion,
         },
