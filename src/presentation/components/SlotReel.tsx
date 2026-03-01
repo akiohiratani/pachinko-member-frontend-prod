@@ -17,6 +17,8 @@ type SlotReelProps = {
   symbols: readonly SymbolDef[];
   highlightColor: string | null;
   spinToken: number;
+  symbolShiftActive?: boolean;
+  symbolShiftDurationMs?: number;
   onSettled?: (token: number) => void;
 };
 
@@ -32,6 +34,8 @@ export function SlotReel({
   symbols,
   highlightColor,
   spinToken,
+  symbolShiftActive = false,
+  symbolShiftDurationMs = 1000,
   onSettled,
 }: SlotReelProps) {
   const symbolCount = symbols.length;
@@ -67,18 +71,27 @@ export function SlotReel({
     }
   }, [spinning, spinToken]);
 
-  const finalOffset = Math.round(
+  const spinOffset = Math.round(
     -(cycles * symbolCount * itemHeight + displayTargetIndex * itemHeight),
   );
+  const idleOffset = -displayTargetIndex * itemHeight;
   const initialOffset = -initialIndex * itemHeight;
-  const restingOffset = hasStarted ? 0 : initialOffset;
+  const restingOffset = hasStarted ? idleOffset : initialOffset;
 
   const trackStyle: React.CSSProperties = {
     transitionProperty: "transform",
-    transitionDuration: spinning ? `${spinMs}ms` : "0ms",
-    transitionTimingFunction: spinning ? easing : "linear",
-    transform: `translate3d(0, ${spinning ? finalOffset : restingOffset}px, 0)`,
-    willChange: spinning ? "transform" : undefined,
+    transitionDuration: spinning
+      ? `${spinMs}ms`
+      : symbolShiftActive
+        ? `${symbolShiftDurationMs}ms`
+        : "0ms",
+    transitionTimingFunction: spinning
+      ? easing
+      : symbolShiftActive
+        ? "cubic-bezier(0.22, 1, 0.36, 1)"
+        : "linear",
+    transform: `translate3d(0, ${spinning ? spinOffset : restingOffset}px, 0)`,
+    willChange: spinning || symbolShiftActive ? "transform" : undefined,
   };
 
   const handleTransitionEnd = React.useCallback(

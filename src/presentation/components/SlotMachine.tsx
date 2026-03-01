@@ -11,6 +11,7 @@ import "./SlotMachine.css";
 type SlotMachineProps = {
   spinning: boolean;
   targetIndexes: number[];
+  symbolShiftActive: boolean;
   reelCount: number;
   baseSpinMs: number;
   reelDelayMs: number;
@@ -66,6 +67,7 @@ function createInitialIndexes(reelCount: number, symbols: readonly SymbolDef[]) 
 export function SlotMachine({
   spinning,
   targetIndexes,
+  symbolShiftActive,
   reelCount,
   baseSpinMs,
   reelDelayMs,
@@ -253,6 +255,8 @@ export function SlotMachine({
                     spinning && highlightMode === "reach" ? reachBlinkColor : null
                   }
                   spinToken={spinToken}
+                  symbolShiftActive={symbolShiftActive}
+                  symbolShiftDurationMs={1000}
                   onSettled={(token) => handleReelSettled(reelIndex, token)}
                 />
               </div>

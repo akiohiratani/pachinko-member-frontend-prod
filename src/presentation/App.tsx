@@ -32,6 +32,7 @@ export default function App() {
   const {
     spinning,
     targetIndexes,
+    symbolShiftActive,
     spinBaseMs,
     reachExtraDelayMs,
     blackoutPhase,
@@ -53,6 +54,7 @@ export default function App() {
         slotManager={slotManager}
         spinning={safeSpinning}
         targetIndexes={targetIndexes}
+        symbolShiftActive={symbolShiftActive}
         spinBaseMs={spinBaseMs}
         reachExtraDelayMs={reachExtraDelayMs}
         highlightMode={highlightMode}

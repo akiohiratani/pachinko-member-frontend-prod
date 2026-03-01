@@ -10,6 +10,7 @@ type SlotMachineSurfaceProps = {
   slotManager: SlotMachineManager;
   spinning: boolean;
   targetIndexes: number[];
+  symbolShiftActive: boolean;
   spinBaseMs: number;
   reachExtraDelayMs: number;
   highlightMode: "none" | "reach" | "win";
@@ -23,6 +24,7 @@ export function SlotMachineSurface({
   slotManager,
   spinning,
   targetIndexes,
+  symbolShiftActive,
   spinBaseMs,
   reachExtraDelayMs,
   highlightMode,
@@ -50,6 +52,7 @@ export function SlotMachineSurface({
       <SlotMachine
         spinning={spinning}
         targetIndexes={targetIndexes}
+        symbolShiftActive={symbolShiftActive}
         reelCount={slotManager.reelCount}
         baseSpinMs={spinBaseMs}
         reelDelayMs={slotManager.reelDelayMs}
