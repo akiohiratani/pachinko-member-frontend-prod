@@ -31,7 +31,6 @@ type SlotGameHandlers = {
 type SlotGameHook = SlotGameState & SlotGameHandlers;
 
 const WIN_SYMBOL_SHIFT_PROBABILITY = 0.25;
-const WIN_SYMBOL_SHIFT_DELAY_MS = 420;
 
 export function useSlotGame(
   slotManager: SlotMachineManager,
@@ -55,12 +54,14 @@ export function useSlotGame(
   const spinCompletionResolverRef = useRef<(() => void) | null>(null);
   const blackoutTimersRef = useRef<number[]>([]);
   const plannedBlackoutDurationRef = useRef<number | null>(null);
-  const winHighlightTimerRef = useRef<number | null>(null);
+  const pendingWinAfterShiftRef = useRef(false);
+  const expectedShiftedIndexesRef = useRef<number[] | null>(null);
   const latestTargetIndexesRef = useRef<number[]>(targetIndexes);
 
   useEffect(() => {
     latestTargetIndexesRef.current = targetIndexes;
   }, [targetIndexes]);
+
 
   useEffect(() => {
     slotManager.preloadSymbols();
@@ -93,10 +94,8 @@ export function useSlotGame(
       blackoutTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
       blackoutTimersRef.current = [];
       plannedBlackoutDurationRef.current = null;
-      if (winHighlightTimerRef.current !== null) {
-        window.clearTimeout(winHighlightTimerRef.current);
-        winHighlightTimerRef.current = null;
-      }
+      pendingWinAfterShiftRef.current = false;
+      expectedShiftedIndexesRef.current = null;
       roundControllerRef.current?.dispose();
       roundControllerRef.current = null;
       websocketRef.current?.disconnect();
@@ -143,6 +142,25 @@ export function useSlotGame(
     websocketRef.current?.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (!pendingWinAfterShiftRef.current) return;
+
+    const expectedIndexes = expectedShiftedIndexesRef.current;
+    if (!expectedIndexes) return;
+
+    if (
+      targetIndexes.length !== expectedIndexes.length ||
+      targetIndexes.some((index, position) => index !== expectedIndexes[position])
+    ) {
+      return;
+    }
+
+    pendingWinAfterShiftRef.current = false;
+    expectedShiftedIndexesRef.current = null;
+    setHighlightMode("win");
+    disconnectSilently();
+  }, [targetIndexes, disconnectSilently]);
+
   const awaitSpinCompletion = useCallback(() => {
     return new Promise<void>((resolve) => {
       spinCompletionResolverRef.current = () => {
@@ -173,10 +191,8 @@ export function useSlotGame(
             setBlackoutPhase("off");
             setSpinning(false);
             setHighlightMode("none");
-            if (winHighlightTimerRef.current !== null) {
-              window.clearTimeout(winHighlightTimerRef.current);
-              winHighlightTimerRef.current = null;
-            }
+            pendingWinAfterShiftRef.current = false;
+            expectedShiftedIndexesRef.current = null;
           },
           onSpin: (indexes) => {
             setTargetIndexes(indexes);
@@ -202,14 +218,12 @@ export function useSlotGame(
               defaultRandom.float() < WIN_SYMBOL_SHIFT_PROBABILITY;
 
             if (shouldShiftSymbols) {
-              setTargetIndexes((current) =>
-                current.map((index) => (index + 1) % SYMBOLS.length),
+              const shiftedIndexes = latestIndexes.map(
+                (index) => (index + 1) % SYMBOLS.length,
               );
-              winHighlightTimerRef.current = window.setTimeout(() => {
-                winHighlightTimerRef.current = null;
-                setHighlightMode("win");
-                disconnectSilently();
-              }, WIN_SYMBOL_SHIFT_DELAY_MS);
+              pendingWinAfterShiftRef.current = true;
+              expectedShiftedIndexesRef.current = shiftedIndexes;
+              setTargetIndexes(shiftedIndexes);
               return;
             }
 
