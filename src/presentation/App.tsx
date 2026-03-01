@@ -38,8 +38,11 @@ export default function App() {
     highlightMode,
     showWelcome,
     connectionError,
+    winSymbolShiftSequence,
+    winSymbolShiftMs,
     onReachBlink,
     onSpinComplete,
+    onWinSymbolShiftComplete,
     onWelcomeTap,
     onReconnect,
   } = useSlotGame(slotManager, websocketUrl);
@@ -56,8 +59,11 @@ export default function App() {
         spinBaseMs={spinBaseMs}
         reachExtraDelayMs={reachExtraDelayMs}
         highlightMode={highlightMode}
+        winSymbolShiftSequence={winSymbolShiftSequence}
+        winSymbolShiftMs={winSymbolShiftMs}
         onReachBlink={onReachBlink}
         onSpinComplete={onSpinComplete}
+        onWinSymbolShiftComplete={onWinSymbolShiftComplete}
         animationsEnabled={animationsEnabled}
       />
 

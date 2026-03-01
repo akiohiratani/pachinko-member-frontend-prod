@@ -22,11 +22,16 @@ type SlotMachineProps = {
   containerMax: number;
   symbols: readonly SymbolDef[];
   highlightMode: "none" | "reach" | "win";
+  winSymbolShiftSequence: number;
+  winSymbolShiftMs: number;
   onReachBlink?: () => void;
   onSpinComplete?: () => void;
+  onWinSymbolShiftComplete?: () => void;
   machineScale?: number;
   animationsEnabled?: boolean;
 };
+
+type ReelAnimationMode = "spin" | "shift";
 
 // アニメーションパターン。Decorator 的にリールへ変化を加えるための定義。
 const cyclesPattern = [8, 9, 10];
@@ -77,8 +82,11 @@ export function SlotMachine({
   containerMax,
   symbols,
   highlightMode,
+  winSymbolShiftSequence,
+  winSymbolShiftMs,
   onReachBlink,
   onSpinComplete,
+  onWinSymbolShiftComplete,
   machineScale = 1,
   animationsEnabled = true,
 }: SlotMachineProps) {
@@ -158,15 +166,31 @@ export function SlotMachine({
 
 
   const [spinToken, setSpinToken] = useState(0);
+  const [reelAnimationMode, setReelAnimationMode] = useState<ReelAnimationMode>("spin");
   const settledReelsRef = useRef<Set<number>>(new Set());
   const prevSpinningRef = useRef(false);
+  const prevShiftSequenceRef = useRef(winSymbolShiftSequence);
 
   useEffect(() => {
     if (spinning && !prevSpinningRef.current) {
+      setReelAnimationMode("spin");
       setSpinToken((token) => token + 1);
     }
     prevSpinningRef.current = spinning;
   }, [spinning, targetIndexes]);
+
+  useEffect(() => {
+    if (!spinning) {
+      prevShiftSequenceRef.current = winSymbolShiftSequence;
+      return;
+    }
+    if (winSymbolShiftSequence === prevShiftSequenceRef.current) {
+      return;
+    }
+    prevShiftSequenceRef.current = winSymbolShiftSequence;
+    setReelAnimationMode("shift");
+    setSpinToken((token) => token + 1);
+  }, [spinning, winSymbolShiftSequence]);
 
   useEffect(() => {
     settledReelsRef.current = new Set();
@@ -177,10 +201,14 @@ export function SlotMachine({
       if (token !== spinToken) return;
       settledReelsRef.current.add(reelIndex);
       if (settledReelsRef.current.size === reelCount) {
+        if (reelAnimationMode === "shift") {
+          onWinSymbolShiftComplete?.();
+          return;
+        }
         onSpinComplete?.();
       }
     },
-    [reelCount, onSpinComplete, spinToken],
+    [onSpinComplete, onWinSymbolShiftComplete, reelAnimationMode, reelCount, spinToken],
   );
 
   return (
@@ -248,6 +276,8 @@ export function SlotMachine({
                   spinMs={spinMs}
                   easing={easing}
                   spinning={spinning}
+                  animationMode={reelAnimationMode}
+                  shiftMs={winSymbolShiftMs}
                   symbols={symbols}
                   highlightColor={
                     spinning && highlightMode === "reach" ? reachBlinkColor : null
