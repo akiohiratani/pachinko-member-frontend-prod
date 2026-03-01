@@ -14,6 +14,7 @@ type SlotReelProps = {
     fakeIndex: number;
     shiftDelayMs: number;
     shiftDurationMs: number;
+    shiftStartAfterMs?: number;
   } | null;
   initialIndex?: number;
   spinMs: number;
@@ -86,12 +87,17 @@ export function SlotReel({
 
     phaseRef.current = "fake";
     setDisplayTargetIndex(fakeStop.fakeIndex);
+    const shiftStartMs =
+      typeof fakeStop.shiftStartAfterMs === "number"
+        ? Math.max(0, fakeStop.shiftStartAfterMs)
+        : spinMs + fakeStop.shiftDelayMs;
+
     shiftTimerRef.current = window.setTimeout(() => {
       phaseRef.current = "final";
       setActiveTransitionMs(fakeStop.shiftDurationMs);
       setDisplayTargetIndex(targetIndex);
       shiftTimerRef.current = null;
-    }, spinMs + fakeStop.shiftDelayMs);
+    }, shiftStartMs);
 
     return () => {
       if (shiftTimerRef.current !== null) {

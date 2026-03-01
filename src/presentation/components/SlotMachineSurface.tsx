@@ -17,6 +17,11 @@ type SlotMachineSurfaceProps = {
     shiftDelayMs: number;
     shiftDurationMs: number;
   } | null;
+  fakeWinShift: {
+    fakeIndex: number;
+    shiftStartAfterMs: number;
+    shiftDurationMs: number;
+  } | null;
   highlightMode: "none" | "reach" | "win";
   onReachBlink?: () => void;
   onSpinComplete?: () => void;
@@ -31,6 +36,7 @@ export function SlotMachineSurface({
   spinBaseMs,
   reachExtraDelayMs,
   fakeMiddleStop,
+  fakeWinShift,
   highlightMode,
   onReachBlink,
   onSpinComplete,
@@ -62,6 +68,7 @@ export function SlotMachineSurface({
         easing={slotManager.easing}
         reachExtraDelayMs={reachExtraDelayMs}
         fakeMiddleStop={fakeMiddleStop}
+        fakeWinShift={fakeWinShift}
         reelWidth={reelWidth}
         itemHeight={itemHeight}
         gap={gap}
