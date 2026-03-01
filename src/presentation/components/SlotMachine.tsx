@@ -16,6 +16,11 @@ type SlotMachineProps = {
   reelDelayMs: number;
   easing: string;
   reachExtraDelayMs: number;
+  fakeMiddleStop: {
+    fakeIndex: number;
+    shiftDelayMs: number;
+    shiftDurationMs: number;
+  } | null;
   reelWidth: number;
   itemHeight: number;
   gap: number;
@@ -71,6 +76,7 @@ export function SlotMachine({
   reelDelayMs,
   easing,
   reachExtraDelayMs,
+  fakeMiddleStop,
   reelWidth,
   itemHeight,
   gap,
@@ -243,6 +249,7 @@ export function SlotMachine({
                   reelWidth={reelWidth}
                   cycles={cyclesPattern[reelIndex % cyclesPattern.length]}
                   targetIndex={targetIndexes[reelIndex] ?? 0}
+                  fakeStop={reelIndex === 1 ? fakeMiddleStop : null}
                   initialIndex={initialIndexes[reelIndex] ?? 0}
                   spinMs={spinMs}
                   easing={easing}
