@@ -10,11 +10,6 @@ type SlotReelProps = {
   reelWidth: number;
   cycles: number;
   targetIndex: number;
-  fakeStop: {
-    fakeIndex: number;
-    shiftDelayMs: number;
-    shiftDurationMs: number;
-  } | null;
   initialIndex?: number;
   spinMs: number;
   easing: string;
@@ -25,14 +20,11 @@ type SlotReelProps = {
   onSettled?: (token: number) => void;
 };
 
-type ReelPhase = "normal" | "fake" | "final";
-
 export function SlotReel({
   itemHeight,
   reelWidth,
   cycles,
   targetIndex,
-  fakeStop,
   initialIndex: initialIndexProp,
   spinMs,
   easing,
@@ -57,49 +49,17 @@ export function SlotReel({
   });
   const [hasStarted, setHasStarted] = React.useState(false);
   const [displayTargetIndex, setDisplayTargetIndex] = React.useState(targetIndex);
-  const [activeTransitionMs, setActiveTransitionMs] = React.useState(spinMs);
-  const phaseRef = React.useRef<ReelPhase>("normal");
   const reportedTokenRef = React.useRef<number | null>(null);
-  const shiftTimerRef = React.useRef<ReturnType<typeof window.setTimeout> | null>(null);
 
   React.useEffect(() => {
-    if (shiftTimerRef.current !== null) {
-      window.clearTimeout(shiftTimerRef.current);
-      shiftTimerRef.current = null;
-    }
-
     if (!spinning) {
-      phaseRef.current = "normal";
       setDisplayTargetIndex(targetIndex);
       return;
     }
 
     setHasStarted(true);
-    setActiveTransitionMs(spinMs);
-
-    // リーチ当選時の一部でのみ、中央リールを「フェイク停止 → 本停止」の 2 段階にする。
-    if (!fakeStop || fakeStop.fakeIndex === targetIndex) {
-      phaseRef.current = "normal";
-      setDisplayTargetIndex(targetIndex);
-      return;
-    }
-
-    phaseRef.current = "fake";
-    setDisplayTargetIndex(fakeStop.fakeIndex);
-    shiftTimerRef.current = window.setTimeout(() => {
-      phaseRef.current = "final";
-      setActiveTransitionMs(fakeStop.shiftDurationMs);
-      setDisplayTargetIndex(targetIndex);
-      shiftTimerRef.current = null;
-    }, spinMs + fakeStop.shiftDelayMs);
-
-    return () => {
-      if (shiftTimerRef.current !== null) {
-        window.clearTimeout(shiftTimerRef.current);
-        shiftTimerRef.current = null;
-      }
-    };
-  }, [fakeStop, spinMs, spinning, targetIndex]);
+    setDisplayTargetIndex(targetIndex);
+  }, [spinMs, spinning, targetIndex]);
 
   React.useEffect(() => {
     if (spinning) {
@@ -115,7 +75,7 @@ export function SlotReel({
 
   const trackStyle: React.CSSProperties = {
     transitionProperty: "transform",
-    transitionDuration: spinning ? `${activeTransitionMs}ms` : "0ms",
+    transitionDuration: spinning ? `${spinMs}ms` : "0ms",
     transitionTimingFunction: spinning ? easing : "linear",
     transform: `translate3d(0, ${spinning ? finalOffset : restingOffset}px, 0)`,
     willChange: spinning ? "transform" : undefined,
@@ -125,8 +85,6 @@ export function SlotReel({
     (event: React.TransitionEvent<HTMLDivElement>) => {
       if (!spinning) return;
       if (event.propertyName !== "transform") return;
-      // フェイク停止演出中は最終停止（phase: final）まで完了通知しない。
-      if (phaseRef.current === "fake") return;
       if (reportedTokenRef.current === spinToken) return;
       reportedTokenRef.current = spinToken;
       onSettled?.(spinToken);

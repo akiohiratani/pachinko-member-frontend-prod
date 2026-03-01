@@ -34,7 +34,6 @@ export default function App() {
     targetIndexes,
     spinBaseMs,
     reachExtraDelayMs,
-    fakeMiddleStop,
     blackoutPhase,
     highlightMode,
     showWelcome,
@@ -56,7 +55,6 @@ export default function App() {
         targetIndexes={targetIndexes}
         spinBaseMs={spinBaseMs}
         reachExtraDelayMs={reachExtraDelayMs}
-        fakeMiddleStop={fakeMiddleStop}
         highlightMode={highlightMode}
         onReachBlink={onReachBlink}
         onSpinComplete={onSpinComplete}
