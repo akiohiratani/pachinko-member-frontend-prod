@@ -36,12 +36,15 @@ export type RoundPlan = {
   } | null;
 };
 
-const FAKE_REACH_STOP_PROBABILITY = 1 / 4;
+// ズレて揃う確立
+const FAKE_REACH_STOP_PROBABILITY = 1 / 3.5;
 const FAKE_SHIFT_DELAY_MIN_MS = 300;
 const FAKE_SHIFT_DELAY_MAX_MS = 500;
 const FAKE_SHIFT_DURATION_MS = 220;
-const FAKE_REACH_BLACKOUT_PROBABILITY = 1 / 2;
-const FAKE_REACH_BLACKOUT_DURATION_MS = 5000;
+
+// 暗転する確立
+const FAKE_REACH_BLACKOUT_PROBABILITY = 1 / 1.5;
+const FAKE_REACH_BLACKOUT_DURATION_MS = 5500;
 
 /**
  * ドメイン設定とインフラを束ね、1 ラウンド分のスロット挙動を計画するユースケース。
