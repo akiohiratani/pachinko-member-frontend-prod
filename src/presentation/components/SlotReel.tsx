@@ -15,6 +15,8 @@ type SlotReelProps = {
   easing: string;
   spinning: boolean;
   symbols: readonly SymbolDef[];
+  fakeStopEnabled?: boolean;
+  fakeStopIndex?: number;
   highlightColor: string | null;
   spinToken: number;
   onSettled?: (token: number) => void;
@@ -30,6 +32,8 @@ export function SlotReel({
   easing,
   spinning,
   symbols,
+  fakeStopEnabled = false,
+  fakeStopIndex,
   highlightColor,
   spinToken,
   onSettled,
@@ -48,11 +52,23 @@ export function SlotReel({
     return symbolCount > 0 ? Math.floor(Math.random() * symbolCount) : 0;
   });
   const [hasStarted, setHasStarted] = React.useState(false);
+  const [phase, setPhase] = React.useState<"idle" | "primary" | "fakeHold" | "final">("idle");
   const reportedTokenRef = React.useRef<number | null>(null);
+  const fakeHoldTimerRef = React.useRef<number | null>(null);
+
+  const normalizedTargetIndex = ((targetIndex % (symbolCount || 1)) + (symbolCount || 1)) % (symbolCount || 1);
+  const resolvedFakeStopIndex =
+    typeof fakeStopIndex === "number"
+      ? ((fakeStopIndex % (symbolCount || 1)) + (symbolCount || 1)) % (symbolCount || 1)
+      : ((normalizedTargetIndex + (symbolCount || 1) - 1) % (symbolCount || 1));
+  const shouldUseFakeStop = fakeStopEnabled && symbolCount > 1;
 
   React.useEffect(() => {
     if (spinning) {
       setHasStarted(true);
+      setPhase("primary");
+    } else {
+      setPhase("idle");
     }
   }, [spinning]);
 
@@ -62,15 +78,47 @@ export function SlotReel({
     }
   }, [spinning, spinToken]);
 
-  const finalOffset = Math.round(-(cycles * symbolCount * itemHeight + targetIndex * itemHeight));
+  React.useEffect(() => {
+    return () => {
+      if (fakeHoldTimerRef.current !== null) {
+        window.clearTimeout(fakeHoldTimerRef.current);
+      }
+    };
+  }, []);
+
+  const primaryStopIndex = shouldUseFakeStop ? resolvedFakeStopIndex : normalizedTargetIndex;
+  const primaryOffset = Math.round(
+    -(cycles * symbolCount * itemHeight + primaryStopIndex * itemHeight),
+  );
+  const finalOffset = Math.round(
+    -(cycles * symbolCount * itemHeight + normalizedTargetIndex * itemHeight),
+  );
   const initialOffset = -initialIndex * itemHeight;
   const restingOffset = hasStarted ? 0 : initialOffset;
 
+  const currentOffset = spinning
+    ? phase === "final"
+      ? finalOffset
+      : primaryOffset
+    : restingOffset;
+
+  const currentDurationMs = spinning
+    ? phase === "final"
+      ? 180
+      : spinMs
+    : 0;
+
+  const currentEasing = spinning
+    ? phase === "final"
+      ? "cubic-bezier(0.22, 1, 0.36, 1)"
+      : easing
+    : "linear";
+
   const trackStyle: React.CSSProperties = {
     transitionProperty: "transform",
-    transitionDuration: spinning ? `${spinMs}ms` : "0ms",
-    transitionTimingFunction: spinning ? easing : "linear",
-    transform: `translate3d(0, ${spinning ? finalOffset : restingOffset}px, 0)`,
+    transitionDuration: `${currentDurationMs}ms`,
+    transitionTimingFunction: currentEasing,
+    transform: `translate3d(0, ${currentOffset}px, 0)`,
     willChange: spinning ? "transform" : undefined,
   };
 
@@ -78,11 +126,25 @@ export function SlotReel({
     (event: React.TransitionEvent<HTMLDivElement>) => {
       if (!spinning) return;
       if (event.propertyName !== "transform") return;
+      if (phase === "primary" && shouldUseFakeStop) {
+        setPhase("fakeHold");
+        const holdMs = 100 + Math.floor(Math.random() * 301);
+        if (fakeHoldTimerRef.current !== null) {
+          window.clearTimeout(fakeHoldTimerRef.current);
+        }
+        fakeHoldTimerRef.current = window.setTimeout(() => {
+          setPhase("final");
+        }, holdMs);
+        return;
+      }
+      if (phase !== "final" && shouldUseFakeStop) {
+        return;
+      }
       if (reportedTokenRef.current === spinToken) return;
       reportedTokenRef.current = spinToken;
       onSettled?.(spinToken);
     },
-    [onSettled, spinToken, spinning],
+    [onSettled, phase, shouldUseFakeStop, spinToken, spinning],
   );
 
   return (
