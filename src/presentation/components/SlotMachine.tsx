@@ -21,6 +21,9 @@ type SlotMachineProps = {
     shiftDelayMs: number;
     shiftDurationMs: number;
   } | null;
+  fakeReachBlackout: {
+    durationMs: number;
+  } | null;
   reelWidth: number;
   itemHeight: number;
   gap: number;
@@ -77,6 +80,7 @@ export function SlotMachine({
   easing,
   reachExtraDelayMs,
   fakeMiddleStop,
+  fakeReachBlackout,
   reelWidth,
   itemHeight,
   gap,
@@ -162,6 +166,42 @@ export function SlotMachine({
     setReachDirection(pool[index]);
   }, [spinning, highlightMode]);
 
+  const [isBlackoutActive, setIsBlackoutActive] = useState(false);
+
+  useEffect(() => {
+    if (!spinning || !fakeMiddleStop || !fakeReachBlackout) {
+      setIsBlackoutActive(false);
+      return;
+    }
+
+    const middleReelOrder = STOP_ORDER.indexOf(1);
+    const middleSequentialPosition = middleReelOrder >= 0 ? middleReelOrder : 1;
+    const middleReelSpinMs =
+      baseSpinMs + reelDelayMs * middleSequentialPosition + reachExtraDelayMs;
+    const blackoutStartDelayMs = middleReelSpinMs + fakeMiddleStop.shiftDelayMs;
+
+    const startTimer = window.setTimeout(() => {
+      setIsBlackoutActive(true);
+    }, blackoutStartDelayMs);
+
+    const endTimer = window.setTimeout(() => {
+      setIsBlackoutActive(false);
+    }, blackoutStartDelayMs + fakeReachBlackout.durationMs);
+
+    return () => {
+      window.clearTimeout(startTimer);
+      window.clearTimeout(endTimer);
+      setIsBlackoutActive(false);
+    };
+  }, [
+    baseSpinMs,
+    fakeMiddleStop,
+    fakeReachBlackout,
+    reachExtraDelayMs,
+    reelDelayMs,
+    spinning,
+  ]);
+
   const [spinToken, setSpinToken] = useState(0);
   const settledReelsRef = useRef<Set<number>>(new Set());
   const prevSpinningRef = useRef(false);
@@ -206,6 +246,9 @@ export function SlotMachine({
           <div className="slot-machine-spin-overlay__aura" />
           <div className="slot-machine-spin-overlay__sweep" />
         </div>
+      )}
+      {isBlackoutActive && (
+        <div className="slot-machine-blackout-overlay" aria-hidden="true" />
       )}
       <div className={machineClassName} style={machineStyle}>
         <div

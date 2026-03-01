@@ -31,12 +31,17 @@ export type RoundPlan = {
     shiftDelayMs: number;
     shiftDurationMs: number;
   } | null;
+  fakeReachBlackout: {
+    durationMs: number;
+  } | null;
 };
 
 const FAKE_REACH_STOP_PROBABILITY = 1 / 4;
 const FAKE_SHIFT_DELAY_MIN_MS = 300;
 const FAKE_SHIFT_DELAY_MAX_MS = 500;
 const FAKE_SHIFT_DURATION_MS = 220;
+const FAKE_REACH_BLACKOUT_PROBABILITY = 1 / 2;
+const FAKE_REACH_BLACKOUT_DURATION_MS = 2000;
 
 /**
  * ドメイン設定とインフラを束ね、1 ラウンド分のスロット挙動を計画するユースケース。
@@ -80,6 +85,7 @@ export class SlotMachineManager {
     const startSound: "win" | "spin" =
       isWin && this.random.float() < SLOT_MACHINE_CONFIG.winStartSoundProbability ? "win" : "spin";
     const fakeMiddleStop = this.buildFakeMiddleStopPlan(targetIndexes, isWin, isReach);
+    const fakeReachBlackout = this.buildFakeReachBlackoutPlan(fakeMiddleStop);
 
     return {
       targetIndexes,
@@ -90,6 +96,7 @@ export class SlotMachineManager {
       isWin,
       reachExtraDelayMs,
       fakeMiddleStop,
+      fakeReachBlackout,
     };
   }
 
@@ -180,5 +187,20 @@ export class SlotMachineManager {
     }
 
     return candidate;
+  }
+
+  /**
+   * フェイク停止演出が確定した時のみ、さらに 1/2 で暗転演出を付与する。
+   * 抽選結果は変えず、演出情報のみを返す。
+   */
+  private buildFakeReachBlackoutPlan(
+    fakeMiddleStop: RoundPlan["fakeMiddleStop"],
+  ): RoundPlan["fakeReachBlackout"] {
+    if (!fakeMiddleStop) return null;
+    if (this.random.float() >= FAKE_REACH_BLACKOUT_PROBABILITY) return null;
+
+    return {
+      durationMs: FAKE_REACH_BLACKOUT_DURATION_MS,
+    };
   }
 }

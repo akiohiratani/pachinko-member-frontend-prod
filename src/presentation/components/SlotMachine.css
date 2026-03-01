@@ -290,3 +290,11 @@
   animation-name: slot-machine-reel-bob-right;
   z-index: 4;
 }
+
+.slot-machine-blackout-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: #000000;
+  z-index: 20;
+}
